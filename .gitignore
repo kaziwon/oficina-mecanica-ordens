@@ -1,0 +1,16 @@
+**/bin/
+**/obj/
+**/TestResults/
+coverage/
+.vs/
+.idea/
+.DS_Store
+.env
+.env.*
+!.env.example
+*.user
+*.suo
+**/.terraform/
+*.tfstate*
+*.tfplan
+*.tfvars
