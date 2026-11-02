@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OficinaMecanica.Ordens.Api/OficinaMecanica.Ordens.Api.csproj" />
+    <Project Path="src/OficinaMecanica.Ordens.Application/OficinaMecanica.Ordens.Application.csproj" />
+    <Project Path="src/OficinaMecanica.Ordens.Domain/OficinaMecanica.Ordens.Domain.csproj" />
+    <Project Path="src/OficinaMecanica.Ordens.Infrastructure/OficinaMecanica.Ordens.Infrastructure.csproj" />
+    <Project Path="src/OficinaMecanica.Ordens.InterfaceAdapters/OficinaMecanica.Ordens.InterfaceAdapters.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OficinaMecanica.Ordens.IntegrationTests/OficinaMecanica.Ordens.IntegrationTests.csproj" />
+    <Project Path="tests/OficinaMecanica.Ordens.UnitTests/OficinaMecanica.Ordens.UnitTests.csproj" />
+  </Folder>
+</Solution>
