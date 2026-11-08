@@ -1,0 +1,21 @@
+using OficinaMecanica.Ordens.Application.Exceptions;
+
+namespace OficinaMecanica.Ordens.Application.Messaging;
+
+public static class MensagemValidator
+{
+    public static void Validar(MensagemIntegracao mensagem, params string[] tipos)
+    {
+        if (mensagem is null || mensagem.Version != 1 || !tipos.Contains(mensagem.Type)
+            || mensagem.MessageId == Guid.Empty || mensagem.SagaId == Guid.Empty
+            || mensagem.Payload is null || mensagem.Payload.OrdemServicoId == Guid.Empty
+            || mensagem.OccurredAt == default || mensagem.OccurredAt.Kind != DateTimeKind.Utc
+            || string.IsNullOrWhiteSpace(mensagem.CorrelationId) || mensagem.CorrelationId.Length > 100
+            || mensagem.CorrelationId.Any(char.IsControl))
+            throw new ValidacaoException("Envelope de integracao invalido ou versao desconhecida.");
+        if (mensagem.CausationId == Guid.Empty || mensagem.Payload.ExecucaoId == Guid.Empty
+            || mensagem.Payload.DescricaoSolicitacao?.Length > 1000
+            || mensagem.Payload.Motivo?.Length > 1000 || mensagem.Payload.Codigo?.Length > 100)
+            throw new ValidacaoException("Dados da mensagem de integracao invalidos.");
+    }
+}

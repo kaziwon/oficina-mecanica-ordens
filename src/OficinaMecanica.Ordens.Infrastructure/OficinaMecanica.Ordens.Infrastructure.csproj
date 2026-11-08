@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <PackageReference Include="AWSSDK.SQS" Version="4.0.100.25" />
     <ProjectReference Include="../OficinaMecanica.Ordens.InterfaceAdapters/OficinaMecanica.Ordens.InterfaceAdapters.csproj" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.22" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />

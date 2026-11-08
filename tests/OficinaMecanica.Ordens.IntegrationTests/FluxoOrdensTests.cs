@@ -141,7 +141,9 @@ public class FluxoOrdensTests
                 DescricaoSolicitacao = "Conflito de placa",
                 CriadaEm = DateTime.UtcNow
             };
-            Assert.Throws<DbUpdateException>(() => new EfOrdemServicoDataSource(context).Adicionar(ordem));
+            var saga = SagaAbertura.Iniciar(ordem.Id, "teste-rollback");
+            var mensagem = Application.Messaging.MensagensAbertura.Registrar(saga, ordem.DescricaoSolicitacao);
+            Assert.Throws<DbUpdateException>(() => new EfOrdemServicoDataSource(context).Adicionar(ordem, saga, mensagem));
         }
 
         using var verificationScope = factory.Services.CreateScope();
@@ -149,6 +151,8 @@ public class FluxoOrdensTests
         Assert.Equal(1, database.Clientes.Count());
         Assert.Equal(1, database.Veiculos.Count());
         Assert.Equal(1, database.OrdensServico.Count());
+        Assert.Equal(1, database.SagasAbertura.Count());
+        Assert.Equal(1, database.Outbox.Count());
     }
 
     [Fact]

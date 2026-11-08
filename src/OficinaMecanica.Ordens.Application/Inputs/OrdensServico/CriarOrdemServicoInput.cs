@@ -23,4 +23,5 @@ public class CriarOrdemServicoInput
     public CriarClienteInput? Cliente { get; }
     public CriarVeiculoDaOrdemInput? Veiculo { get; }
     public string DescricaoSolicitacao { get; }
+    public string? CorrelationId { get; set; }
 }

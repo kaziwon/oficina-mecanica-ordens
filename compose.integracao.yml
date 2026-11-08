@@ -1,0 +1,90 @@
+name: oficina-fase4-integracao
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ordens
+      MYSQL_USER: ordens_app
+      MYSQL_PASSWORD: LocalOrdensSaga123
+      MYSQL_ROOT_PASSWORD: LocalRootSaga123
+    ports: ["127.0.0.1:3309:3306"]
+    volumes: ["ordens_integracao:/var/lib/mysql"]
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_PASSWORD mysql -h 127.0.0.1 -u$$MYSQL_USER $$MYSQL_DATABASE -e 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  mongo:
+    image: mongo:8.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: execucao_root
+      MONGO_INITDB_ROOT_PASSWORD: LocalMongoSaga123
+      MONGO_INITDB_DATABASE: execucao
+      MONGO_DATABASE: execucao
+      MONGO_USERNAME: execucao_app
+      MONGO_PASSWORD: LocalExecucaoSaga123
+    ports: ["127.0.0.1:27019:27017"]
+    volumes:
+      - execucao_integracao:/data/db
+      - ${EXECUCAO_PATH:-../oficina-mecanica-execucao}/infra/local/mongo-init.js:/docker-entrypoint-initdb.d/01-execucao.js:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet -u $$MONGO_INITDB_ROOT_USERNAME -p $$MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin --eval 'db.adminCommand({ping:1}).ok'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  filas-permissoes:
+    image: softwaremill/elasticmq:1.7.1
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["chown 999:999 /data"]
+    volumes: ["filas_integracao:/data"]
+
+  elasticmq:
+    image: softwaremill/elasticmq:1.7.1
+    ports: ["127.0.0.1:9324:9324"]
+    volumes:
+      - ./infra/local/elasticmq.conf:/opt/elasticmq.conf:ro
+      - filas_integracao:/data
+    depends_on:
+      filas-permissoes: { condition: service_completed_successfully }
+
+  ordens:
+    build: .
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Server=mysql;Database=ordens;User=ordens_app;Password=LocalOrdensSaga123
+      Database__ApplyMigrations: "true"
+      JwtSettings__SecretKey: chave-local-da-integracao-fase4-1234567890
+      AdminUserSettings__Username: admin
+      AdminUserSettings__Password: LocalAdminSaga123
+      Messaging__Enabled: "true"
+      Messaging__Endpoint: http://elasticmq:9324
+    ports: ["127.0.0.1:18091:8080"]
+    depends_on:
+      mysql: { condition: service_healthy }
+      elasticmq: { condition: service_started }
+
+  execucao:
+    build:
+      context: ${EXECUCAO_PATH:-../oficina-mecanica-execucao}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      MongoSettings__ConnectionString: mongodb://execucao_app:LocalExecucaoSaga123@mongo:27017/execucao?authSource=execucao
+      MongoSettings__DatabaseName: execucao
+      JwtSettings__SecretKey: chave-local-da-integracao-fase4-1234567890
+      AdminUserSettings__Username: admin
+      AdminUserSettings__Password: LocalAdminSaga123
+      Messaging__Enabled: "true"
+      Messaging__Endpoint: http://elasticmq:9324
+    ports: ["127.0.0.1:18092:8080"]
+    depends_on:
+      mongo: { condition: service_healthy }
+      elasticmq: { condition: service_started }
+
+volumes:
+  ordens_integracao:
+  execucao_integracao:
+  filas_integracao:

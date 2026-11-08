@@ -29,6 +29,11 @@ public class ExceptionMiddleware
             _logger.LogWarning(exception, "Conflito ao processar a requisicao");
             await EscreverErro(context, 409, exception.Message);
         }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            _logger.LogWarning(exception, "Conflito de versao ao processar a requisicao");
+            await EscreverErro(context, 409, "O processo foi alterado por outra requisicao. Consulte novamente.");
+        }
         catch (DbUpdateException exception)
         {
             _logger.LogError(exception, "Falha ao persistir dados da requisicao");

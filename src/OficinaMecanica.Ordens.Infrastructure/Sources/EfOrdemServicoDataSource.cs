@@ -2,6 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using OficinaMecanica.Ordens.Domain.Entities;
 using OficinaMecanica.Ordens.Infrastructure.Persistence;
 using OficinaMecanica.Ordens.InterfaceAdapters.DataSources;
+using OficinaMecanica.Ordens.Application.Messaging;
+using OficinaMecanica.Ordens.Infrastructure.Messaging;
+using OficinaMecanica.Ordens.Infrastructure.Persistence.Models;
 
 namespace OficinaMecanica.Ordens.Infrastructure.Sources;
 
@@ -14,9 +17,17 @@ public class EfOrdemServicoDataSource : IOrdemServicoDataSource
         _context = context;
     }
 
-    public OrdemServico Adicionar(OrdemServico ordemServico)
+    public OrdemServico Adicionar(OrdemServico ordemServico, SagaAbertura saga, MensagemIntegracao mensagem)
     {
         _context.OrdensServico.Add(ordemServico);
+        _context.SagasAbertura.Add(saga);
+        _context.Outbox.Add(new MensagemOutbox
+        {
+            Id = mensagem.MessageId,
+            SagaId = saga.Id,
+            Body = MensagemSerializer.Serializar(mensagem),
+            CriadaEm = mensagem.OccurredAt
+        });
         _context.SaveChanges();
         return ordemServico;
     }

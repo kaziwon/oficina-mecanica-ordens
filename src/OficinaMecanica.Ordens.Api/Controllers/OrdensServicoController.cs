@@ -26,7 +26,7 @@ public class OrdensServicoController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public IActionResult Post([FromBody] HttpDtos.OrdemServicoRequestDto request)
     {
-        var ordem = _controller.Criar(request.ParaCleanDto());
+        var ordem = _controller.Criar(request.ParaCleanDto(), HttpContext.TraceIdentifier);
         return CreatedAtAction(nameof(GetById), new { id = ordem.Id }, ordem);
     }
 

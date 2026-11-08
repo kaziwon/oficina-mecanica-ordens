@@ -2,13 +2,11 @@
 
 ## Estado deste documento
 
-Este documento define o primeiro fluxo a implementar. **Ainda nao existe
-publicacao ou consumo dessas mensagens.** As APIs continuam independentes.
-Nao foram adicionados broker, workers, tabelas de Saga ou recursos AWS nesta
-etapa. Os exemplos abaixo nao sao endpoints HTTP disponiveis.
-
-O transporte e sua biblioteca serao configurados na implementacao seguinte;
-os nomes das mensagens e as regras de negocio nao dependem de um SDK de fila.
+Este documento define o primeiro fluxo, agora implementado: publicacao e consumo
+por SQS, Saga persistida em Ordens e respostas atomicas em Execucao. O
+[guia de execucao local](02-executar-abertura.md) usa ElasticMQ como simulador SQS.
+Nao foram criados recursos AWS. Os exemplos abaixo sao mensagens, nao endpoints
+HTTP. O fluxo de Cobranca e os proximos estados ainda nao fazem parte desta entrega.
 
 ## Responsabilidades
 
@@ -144,7 +142,8 @@ Confirmacoes de etapas distintas nao podem ser aceitas somente por terem o mesmo
 | Fila fora do ar | Manter a outbox e tentar novamente; nao perder a OS |
 | Banco de Execucao indisponivel | Nao confirmar a mensagem; permitir nova tentativa |
 | Resposta perdida | Republicar a resposta pendente, preservando seu `messageId` |
-| Recusa definitiva de negocio | Registrar o motivo na Saga e cancelar a OS com historico |
+| Registro recusado com `ProcessoCancelado` | Registrar o motivo na Saga e cancelar a OS com historico |
+| Recusa por vinculo conflitante ou codigo desconhecido | Exigir intervencao, sem cancelar trabalho possivelmente existente |
 | Tentativas tecnicas esgotadas | Fila de mensagens mortas e intervencao/reprocessamento; nao fingir recusa de negocio |
 | Cancelamento do processo antes do diagnostico | Enviar `CancelarEntradaExecucao` e aguardar confirmacao |
 | Diagnostico ja iniciado | Recusar esta compensacao automatica e exigir tratamento explicito |
@@ -162,7 +161,7 @@ recriar essa entrada. Repetir o cancelamento deve devolver o mesmo resultado.
 
 O estado da Saga e separado do status operacional da OS. Estados previstos
 para este trecho: `AguardandoRegistro`, `RegistroConfirmado`,
-`CompensacaoPendente`, `Compensada` e `FalhaRequerIntervencao`.
+`CompensacaoPendente`, `Compensada`, `RegistroRecusado` e `FalhaRequerIntervencao`.
 `RegistroConfirmado` conclui apenas este trecho, nao a Saga completa da oficina.
 
 ## Clean Architecture e verificacao
@@ -172,7 +171,7 @@ Domain. InterfaceAdapters fara a adaptacao das mensagens aos use cases. SDK de
 fila, serializacao, workers e persistencia ficarao nas camadas externas.
 Nao havera referencia entre os projetos ou acesso ao banco do outro servico.
 
-A implementacao sera validada com:
+A implementacao deste trecho e validada com:
 
 - Abertura da OS gerando uma unica entrada na fila.
 - Repeticao de comandos e respostas sem duplicar execucao ou historico.
@@ -183,4 +182,5 @@ A implementacao sera validada com:
 - Correlacao da mesma Saga nos logs dos dois servicos.
 
 O teste do fluxo distribuido vira a base do BDD exigido na Fase 4. Estes casos
-estao **planejados**, nao executados por esta alteracao de documentacao.
+completos, incluindo Cobranca e pagamento, ainda serao implementados. Os testes
+deste incremento cobrem somente a abertura e compensacao da entrada na fila.

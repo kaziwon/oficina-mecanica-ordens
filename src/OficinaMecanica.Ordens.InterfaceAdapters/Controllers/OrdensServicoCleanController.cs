@@ -23,7 +23,7 @@ public class OrdensServicoCleanController
         _listar = listar;
     }
 
-    public OrdemServicoResponseDto Criar(OrdemServicoRequestDto request)
+    public OrdemServicoResponseDto Criar(OrdemServicoRequestDto request, string? correlationId = null)
     {
         var cliente = request.Cliente is null ? null : new CriarClienteInput(
             request.Cliente.Nome, request.Cliente.CpfCnpj, request.Cliente.Email, request.Cliente.Telefone);
@@ -31,6 +31,7 @@ public class OrdensServicoCleanController
             request.Veiculo.Placa, request.Veiculo.Marca, request.Veiculo.Modelo, request.Veiculo.Ano);
         var input = new CriarOrdemServicoInput(
             request.CpfCnpj, request.VeiculoId, cliente, veiculo, request.DescricaoSolicitacao);
+        input.CorrelationId = correlationId;
 
         return OrdemServicoPresenter.Apresentar(_criar.Executar(input));
     }

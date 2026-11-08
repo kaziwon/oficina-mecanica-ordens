@@ -30,6 +30,8 @@ public class OrdensApiFactory : WebApplicationFactory<Program>
                 ["AdminUserSettings:Username"] = "admin",
                 ["AdminUserSettings:Password"] = "SenhaDosTestes@123",
                 ["Database:ApplyMigrations"] = "false"
+                ,
+                ["Messaging:Enabled"] = "false"
             }));
         builder.ConfigureServices(services =>
         {
