@@ -19,6 +19,13 @@ As OS novas ficam em `Recebida`. As transicoes seguintes serao implementadas
 quando Execucao e Cobranca forem conectados. Este servico nao possui tabelas de
 estoque, orcamentos ou pagamentos e ainda nao publica mensagens.
 
+## Primeiro contrato de integracao
+
+O [contrato v1 de abertura de OS e entrada em Execucao](docs/integracao/01-abertura-os.md)
+define comandos, respostas, repeticao, falhas e compensacao do primeiro trecho
+da Saga orquestrada. E um contrato para a implementacao seguinte: esta etapa
+ainda nao conecta os servicos nem instala filas ou cria recursos na AWS.
+
 ## Clean Architecture
 
 ```text
@@ -207,7 +214,7 @@ No futuro deploy, a aplicacao das migrations sera uma etapa controlada da entreg
 ## Proximos incrementos
 
 - Contratos de mensagens e Saga orquestrada persistida em Ordens.
-- Integracao com Execucao (MongoDB) e Cobranca (MySQL e Mercado Pago).
+- Integracao com Execucao (MongoDB) e Cobranca (MySQL e mock de pagamento autorizado pelo professor).
 - Autenticacao por CPF e autorizacao por cliente.
 - Terraform, Kubernetes, Kong e CD independente para a Fase 4.
 - New Relic distribuido, qualidade no CI e evidencias finais.
