@@ -21,6 +21,18 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddOrdens(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddOptions<Infrastructure.Settings.MessagingSettings>().Bind(configuration.GetSection("Messaging"));
+        services.AddSingleton<Infrastructure.Messaging.SqsTransport>();
+        services.AddHostedService<Messaging.IntegracaoWorker>();
+        services.AddScoped<IOutboxDataSource, EfOutboxDataSource>();
+        services.AddScoped<IOutboxGateway, OutboxGateway>();
+        services.AddScoped<ISagaAberturaDataSource, EfSagaAberturaDataSource>();
+        services.AddScoped<ISagaAberturaGateway, SagaAberturaGateway>();
+        services.AddScoped<ObterSagaAberturaUseCase>();
+        services.AddScoped<CancelarEntradaExecucaoUseCase>();
+        services.AddScoped<ProcessarRespostaAberturaUseCase>();
+        services.AddScoped<IntegracaoCleanController>();
+        services.AddScoped<SagaAberturaCleanController>();
         services.AddDbContext<AppDbContext>((provider, options) =>
         {
             var connection = provider.GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection");

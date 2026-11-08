@@ -4,6 +4,7 @@ using OficinaMecanica.Ordens.Application.Inputs.OrdensServico;
 using OficinaMecanica.Ordens.Application.Mappers.OrdensServico;
 using OficinaMecanica.Ordens.Application.Outputs.OrdensServico;
 using OficinaMecanica.Ordens.Domain.Entities;
+using OficinaMecanica.Ordens.Application.Messaging;
 
 namespace OficinaMecanica.Ordens.Application.UseCases.OrdensServico;
 
@@ -72,7 +73,10 @@ public class CriarOrdemServicoUseCase
             RegistradoEm = agora
         });
 
-        return OrdemServicoOutputMapper.Mapear(_ordens.Adicionar(ordem));
+        var saga = SagaAbertura.Iniciar(ordem.Id, input.CorrelationId);
+        var mensagem = MensagensAbertura.Registrar(saga, ordem.DescricaoSolicitacao);
+        MensagemValidator.Validar(mensagem, "RegistrarExecucao");
+        return OrdemServicoOutputMapper.Mapear(_ordens.Adicionar(ordem, saga, mensagem));
     }
 
     private void VincularCadastrosExistentes(OrdemServico ordem, CriarOrdemServicoInput input)

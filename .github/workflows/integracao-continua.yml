@@ -25,6 +25,12 @@ jobs:
     name: Testes e cobertura
     runs-on: ubuntu-latest
     needs: build
+    services:
+      sqs:
+        image: softwaremill/elasticmq:1.7.1
+        ports: ["9324:9324"]
+    env:
+      SQS_TEST_ENDPOINT: http://127.0.0.1:9324
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4

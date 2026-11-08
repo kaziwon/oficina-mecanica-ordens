@@ -62,7 +62,6 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("OficinaMecanica.Ordens.Domain.Entities.HistoricoStatusOrdemServico", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
                     b.Property<Guid>("OrdemServicoId")
@@ -115,6 +114,55 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
                     b.ToTable("OrdensServico");
                 });
 
+            modelBuilder.Entity("OficinaMecanica.Ordens.Domain.Entities.SagaAbertura", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("AtualizadaEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime>("CriadaEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("ExecucaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Motivo")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<Guid>("OrdemServicoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("PedidoCancelamentoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("PedidoRegistroId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<long>("Versao")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrdemServicoId")
+                        .IsUnique();
+
+                    b.ToTable("SagasAbertura");
+                });
+
             modelBuilder.Entity("OficinaMecanica.Ordens.Domain.Entities.Veiculo", b =>
                 {
                     b.Property<Guid>("Id")
@@ -155,6 +203,51 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
                     b.ToTable("Veiculos");
                 });
 
+            modelBuilder.Entity("OficinaMecanica.Ordens.Infrastructure.Persistence.Models.MensagemInbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("ProcessadaEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("SagaId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SagaId");
+
+                    b.ToTable("Inbox");
+                });
+
+            modelBuilder.Entity("OficinaMecanica.Ordens.Infrastructure.Persistence.Models.MensagemOutbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CriadaEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("PublicadaEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("SagaId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SagaId");
+
+                    b.HasIndex("PublicadaEm", "CriadaEm");
+
+                    b.ToTable("Outbox");
+                });
+
             modelBuilder.Entity("OficinaMecanica.Ordens.Domain.Entities.HistoricoStatusOrdemServico", b =>
                 {
                     b.HasOne("OficinaMecanica.Ordens.Domain.Entities.OrdemServico", null)
@@ -183,6 +276,15 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
                     b.Navigation("Veiculo");
                 });
 
+            modelBuilder.Entity("OficinaMecanica.Ordens.Domain.Entities.SagaAbertura", b =>
+                {
+                    b.HasOne("OficinaMecanica.Ordens.Domain.Entities.OrdemServico", null)
+                        .WithOne()
+                        .HasForeignKey("OficinaMecanica.Ordens.Domain.Entities.SagaAbertura", "OrdemServicoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("OficinaMecanica.Ordens.Domain.Entities.Veiculo", b =>
                 {
                     b.HasOne("OficinaMecanica.Ordens.Domain.Entities.Cliente", "Cliente")
@@ -192,6 +294,24 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Cliente");
+                });
+
+            modelBuilder.Entity("OficinaMecanica.Ordens.Infrastructure.Persistence.Models.MensagemInbox", b =>
+                {
+                    b.HasOne("OficinaMecanica.Ordens.Domain.Entities.SagaAbertura", null)
+                        .WithMany()
+                        .HasForeignKey("SagaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("OficinaMecanica.Ordens.Infrastructure.Persistence.Models.MensagemOutbox", b =>
+                {
+                    b.HasOne("OficinaMecanica.Ordens.Domain.Entities.SagaAbertura", null)
+                        .WithMany()
+                        .HasForeignKey("SagaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("OficinaMecanica.Ordens.Domain.Entities.Cliente", b =>

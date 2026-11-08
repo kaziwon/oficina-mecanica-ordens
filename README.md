@@ -15,16 +15,19 @@ primeiro incremento da Fase 4, em repositorio independente da entrega da Fase 3.
 - Swagger, healthchecks e logs JSON com `X-Correlation-ID` e identificacao do trace.
 - Testes unitarios e de integracao, CI e relatorios de cobertura.
 
-As OS novas ficam em `Recebida`. As transicoes seguintes serao implementadas
-quando Execucao e Cobranca forem conectados. Este servico nao possui tabelas de
-estoque, orcamentos ou pagamentos e ainda nao publica mensagens.
+As OS novas ficam em `Recebida`. A abertura agora grava tambem a Saga e o
+pedido de entrada em Execucao na mesma transacao. O worker publica esse pedido
+quando habilitado. Este servico nao possui tabelas de estoque, orcamentos ou
+pagamentos. Diagnostico, orcamento, pagamento e reparo ainda serao conectados.
 
 ## Primeiro contrato de integracao
 
 O [contrato v1 de abertura de OS e entrada em Execucao](docs/integracao/01-abertura-os.md)
 define comandos, respostas, repeticao, falhas e compensacao do primeiro trecho
-da Saga orquestrada. E um contrato para a implementacao seguinte: esta etapa
-ainda nao conecta os servicos nem instala filas ou cria recursos na AWS.
+da Saga orquestrada. Esse trecho esta implementado. O
+[guia da integracao local](docs/integracao/02-executar-abertura.md) explica como
+subir os dois servicos com SQS simulado, consultar a Saga e testar compensacao.
+Nenhum desses comandos cria recursos AWS ou envolve Cobranca.
 
 ## Clean Architecture
 
@@ -163,6 +166,8 @@ Misturar as alternativas retorna HTTP 400. CPF/CNPJ ou placa duplicados retornam
 | POST | `/api/ordensservico` | Abrir OS |
 | GET | `/api/ordensservico/{id}` | Consultar OS e historico |
 | GET | `/api/ordensservico?status=Recebida&ordenacao=maisAntigo` | Listar OS |
+| GET | `/api/ordensservico/{id}/saga-abertura` | Acompanhar o registro ou a compensacao |
+| POST | `/api/ordensservico/{id}/cancelar-entrada` | Solicitar compensacao antes do diagnostico |
 
 O login e os healthchecks sao publicos. As operacoes de cadastro e OS exigem JWT
 administrativo. `ordenacao` aceita `maisAntigo` ou `maisNovo`. A prioridade de
@@ -187,6 +192,11 @@ Os testes unitarios usam gateways em memoria. Os testes de integracao executam
 o pipeline HTTP real com SQLite relacional em memoria, incluindo integridade
 referencial e rollback. Eles nao precisam de Docker ou AWS; a validacao do
 provider MySQL e da imagem Docker deve ser feita tambem com o Compose.
+
+O CI inicia tambem um ElasticMQ descartavel para verificar envio, reentrega e
+confirmacao usando o SDK SQS real. Com `SQS_TEST_ENDPOINT` ausente, somente o
+teste de transporte e marcado como ignorado; as verificacoes de Saga e outbox
+continuam funcionando sem fila.
 
 O CI faz build e testes e publica os arquivos `coverage.cobertura.xml` como
 artefato. A verificacao obrigatoria de 80%, o Sonar e o fluxo BDD distribuido
@@ -213,7 +223,7 @@ No futuro deploy, a aplicacao das migrations sera uma etapa controlada da entreg
 
 ## Proximos incrementos
 
-- Contratos de mensagens e Saga orquestrada persistida em Ordens.
+- Proximas etapas da Saga: diagnostico, orcamento, pagamento e reparo.
 - Integracao com Execucao (MongoDB) e Cobranca (MySQL e mock de pagamento autorizado pelo professor).
 - Autenticacao por CPF e autorizacao por cliente.
 - Terraform, Kubernetes, Kong e CD independente para a Fase 4.
