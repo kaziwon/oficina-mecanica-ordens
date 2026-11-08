@@ -22,7 +22,7 @@ public static class MensagemSerializer
 
     public static MensagemIntegracao Desserializar(string body)
     {
-        if (body.Length > 64000) throw new JsonException("Mensagem muito grande.");
+        if (System.Text.Encoding.UTF8.GetByteCount(body) > 262144) throw new JsonException("Mensagem muito grande.");
         using var document = JsonDocument.Parse(body, new JsonDocumentOptions { MaxDepth = 16 });
         if (document.RootElement.ValueKind != JsonValueKind.Object) throw new JsonException("Envelope deve ser um objeto.");
         foreach (var campo in new[] { "messageId", "type", "version", "sagaId", "causationId", "occurredAt", "correlationId", "payload" })

@@ -2,6 +2,7 @@
 **/obj/
 **/TestResults/
 coverage/
+__pycache__/
 .vs/
 .idea/
 .DS_Store
