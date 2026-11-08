@@ -12,6 +12,8 @@ public static class SagaAberturaOutputMapper
         ExecucaoId = saga.ExecucaoId,
         OrcamentoId = saga.OrcamentoId,
         ValorOrcamento = saga.ValorOrcamento,
+        OrcamentoAprovado = saga.OrcamentoAprovado,
+        OrcamentoRespondidoEm = saga.OrcamentoRespondidoEm,
         DiagnosticoIniciadoEm = saga.DiagnosticoIniciadoEm,
         DiagnosticoConcluidoEm = saga.DiagnosticoConcluidoEm,
         Status = saga.Status,

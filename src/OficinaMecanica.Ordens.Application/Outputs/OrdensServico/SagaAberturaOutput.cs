@@ -9,6 +9,8 @@ public class SagaAberturaOutput
     public Guid? ExecucaoId { get; set; }
     public Guid? OrcamentoId { get; set; }
     public decimal? ValorOrcamento { get; set; }
+    public bool? OrcamentoAprovado { get; set; }
+    public DateTime? OrcamentoRespondidoEm { get; set; }
     public DateTime? DiagnosticoIniciadoEm { get; set; }
     public DateTime? DiagnosticoConcluidoEm { get; set; }
     public StatusSagaAbertura Status { get; set; }

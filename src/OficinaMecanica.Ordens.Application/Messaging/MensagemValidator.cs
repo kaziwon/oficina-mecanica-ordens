@@ -20,6 +20,9 @@ public static class MensagemValidator
         if (mensagem.Payload.Diagnostico?.Length > 2000 || mensagem.Payload.OrcamentoId == Guid.Empty
             || (mensagem.Payload.Itens is not null && mensagem.Payload.Itens.Any(item => item is null)))
             throw new ValidacaoException("Snapshot de diagnostico ou orcamento invalido.");
+        if (mensagem.Payload.OrcamentoCriadoEm.HasValue
+            && mensagem.Type is not ("OrcamentoAprovado" or "OrcamentoRecusado"))
+            throw new ValidacaoException("O tipo de mensagem nao admite a data de criacao do orcamento.");
         if (mensagem.Type is "RegistrarExecucao" or "CancelarEntradaExecucao" or "ExecucaoRegistrada"
             or "RegistroExecucaoRecusado" or "EntradaExecucaoCancelada" or "CancelamentoEntradaExecucaoRecusado")
         {

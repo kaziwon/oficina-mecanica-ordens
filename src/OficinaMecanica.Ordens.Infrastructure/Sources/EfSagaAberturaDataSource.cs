@@ -25,6 +25,10 @@ public class EfSagaAberturaDataSource : ISagaAberturaDataSource
             if (novoStatus == StatusOrdemServico.EmDiagnostico) ordem.RegistrarDiagnostico(saga.DiagnosticoIniciadoEm!.Value);
             else if (novoStatus == StatusOrdemServico.AguardandoAprovacao)
                 ordem.AguardarAprovacao(saga.DiagnosticoIniciadoEm!.Value, registradoEm!.Value);
+            else if (novoStatus == StatusOrdemServico.AguardandoPagamento)
+                ordem.AguardarPagamento(saga.DiagnosticoIniciadoEm!.Value, saga.OrcamentoCriadoEm!.Value, saga.OrcamentoRespondidoEm!.Value);
+            else if (novoStatus == StatusOrdemServico.Cancelada)
+                ordem.CancelarPorRecusaOrcamento(registradoEm!.Value);
             else throw new InvalidOperationException("Transicao de integracao desconhecida.");
         }
         if (cancelarOrdem)

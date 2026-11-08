@@ -11,6 +11,11 @@ public class SagaAbertura
     public Guid? PedidoOrcamentoId { get; set; }
     public Guid? OrcamentoId { get; set; }
     public decimal? ValorOrcamento { get; set; }
+    public Guid? EventoRespostaOrcamentoId { get; set; }
+    public bool? OrcamentoAprovado { get; set; }
+    public DateTime? OrcamentoCriadoEm { get; set; }
+    public DateTime? OrcamentoRespondidoEm { get; set; }
+    public Guid? PedidoCancelamentoPorRecusaId { get; set; }
     public DateTime? DiagnosticoIniciadoEm { get; set; }
     public DateTime? DiagnosticoConcluidoEm { get; set; }
     public StatusSagaAbertura Status { get; set; }
@@ -77,7 +82,8 @@ public class SagaAbertura
 
     public bool RegistrarDiagnostico(Guid execucaoId, DateTime inicio)
     {
-        if (Status is StatusSagaAbertura.Compensada or StatusSagaAbertura.RegistroRecusado) return false;
+        if (Status is StatusSagaAbertura.Compensada or StatusSagaAbertura.RegistroRecusado
+            or StatusSagaAbertura.OrcamentoRecusado) return false;
         if ((ExecucaoId.HasValue && ExecucaoId != execucaoId)
             || (DiagnosticoIniciadoEm.HasValue && DiagnosticoIniciadoEm != inicio))
             throw new InvalidOperationException("Diagnostico diverge da execucao conhecida.");
@@ -127,6 +133,35 @@ public class SagaAbertura
         if (Status != StatusSagaAbertura.OrcamentoPendente) return;
         Status = StatusSagaAbertura.FalhaRequerIntervencao;
         Motivo = motivo;
+        Alterada();
+    }
+
+    public bool ResponderOrcamento(Guid eventoId, bool aprovado, DateTime criadoEm, DateTime respondidoEm, string? motivo)
+    {
+        if (EventoRespostaOrcamentoId.HasValue)
+        {
+            if (EventoRespostaOrcamentoId != eventoId || OrcamentoAprovado != aprovado)
+                throw new InvalidOperationException("O orcamento ja recebeu outra resposta nesta Saga.");
+            return false;
+        }
+        if (Status != StatusSagaAbertura.OrcamentoGerado)
+            throw new InvalidOperationException("A Saga nao esta aguardando resposta do orcamento.");
+        EventoRespostaOrcamentoId = eventoId;
+        OrcamentoAprovado = aprovado;
+        OrcamentoCriadoEm = criadoEm;
+        OrcamentoRespondidoEm = respondidoEm;
+        Motivo = motivo;
+        Status = aprovado ? StatusSagaAbertura.AguardandoPagamento : StatusSagaAbertura.CancelamentoPorRecusaPendente;
+        if (!aprovado) PedidoCancelamentoPorRecusaId = Guid.NewGuid();
+        Alterada();
+        return true;
+    }
+
+    public void ConcluirCancelamentoPorRecusa(bool aceito, string? motivo)
+    {
+        if (Status != StatusSagaAbertura.CancelamentoPorRecusaPendente) return;
+        Status = aceito ? StatusSagaAbertura.OrcamentoRecusado : StatusSagaAbertura.FalhaRequerIntervencao;
+        if (!aceito) Motivo = motivo;
         Alterada();
     }
 

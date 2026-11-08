@@ -13,4 +13,5 @@ public class DadosMensagem
     public List<ItemMensagem>? Itens { get; set; }
     public Guid? OrcamentoId { get; set; }
     public decimal? ValorTotal { get; set; }
+    public DateTime? OrcamentoCriadoEm { get; set; }
 }

@@ -24,6 +24,21 @@ public class OrdemServico
             RegistrarStatus(StatusOrdemServico.AguardandoAprovacao, orcamentoCriadoEm);
     }
 
+    public void AguardarPagamento(DateTime inicio, DateTime orcamentoCriadoEm, DateTime respondidoEm)
+    {
+        AguardarAprovacao(inicio, orcamentoCriadoEm);
+        if (Status == StatusOrdemServico.AguardandoAprovacao)
+            RegistrarStatus(StatusOrdemServico.AguardandoPagamento, respondidoEm);
+    }
+
+    public void CancelarPorRecusaOrcamento(DateTime registradoEm)
+    {
+        if (Status == StatusOrdemServico.Cancelada) return;
+        if (Status != StatusOrdemServico.AguardandoAprovacao)
+            throw new InvalidOperationException("A OS nao pode ser cancelada por recusa de orcamento neste status.");
+        RegistrarStatus(StatusOrdemServico.Cancelada, registradoEm);
+    }
+
     private void RegistrarStatus(StatusOrdemServico status, DateTime registradoEm)
     {
         Status = status;
