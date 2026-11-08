@@ -8,4 +8,5 @@ public class MessagingSettings
     public string Region { get; set; } = "us-east-1";
     public string ComandosQueue { get; set; } = "execucao-comandos";
     public string EventosQueue { get; set; } = "ordens-eventos";
+    public string OrcamentosQueue { get; set; } = "cobranca-comandos";
 }

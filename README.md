@@ -18,7 +18,8 @@ primeiro incremento da Fase 4, em repositorio independente da entrega da Fase 3.
 As OS novas ficam em `Recebida`. A abertura agora grava tambem a Saga e o
 pedido de entrada em Execucao na mesma transacao. O worker publica esse pedido
 quando habilitado. Este servico nao possui tabelas de estoque, orcamentos ou
-pagamentos. Diagnostico, orcamento, pagamento e reparo ainda serao conectados.
+pagamentos. Inicio/conclusao de diagnostico e geracao de orcamento ja estao
+conectados por mensagens. Pagamento e reparo ainda serao conectados.
 
 ## Primeiro contrato de integracao
 
@@ -26,8 +27,10 @@ O [contrato v1 de abertura de OS e entrada em Execucao](docs/integracao/01-abert
 define comandos, respostas, repeticao, falhas e compensacao do primeiro trecho
 da Saga orquestrada. Esse trecho esta implementado. O
 [guia da integracao local](docs/integracao/02-executar-abertura.md) explica como
-subir os dois servicos com SQS simulado, consultar a Saga e testar compensacao.
-Nenhum desses comandos cria recursos AWS ou envolve Cobranca.
+subir o ambiente com SQS simulado, consultar a Saga e testar compensacao.
+O [guia de diagnostico e orcamento](docs/integracao/03-diagnostico-orcamento.md)
+documenta a integracao dos tres servicos, reentregas, recusas e o teste HTTP
+automatizado. Nenhum desses comandos cria recursos AWS.
 
 ## Clean Architecture
 
@@ -223,8 +226,8 @@ No futuro deploy, a aplicacao das migrations sera uma etapa controlada da entreg
 
 ## Proximos incrementos
 
-- Proximas etapas da Saga: diagnostico, orcamento, pagamento e reparo.
-- Integracao com Execucao (MongoDB) e Cobranca (MySQL e mock de pagamento autorizado pelo professor).
+- Proximas etapas da Saga: resposta ao orcamento, pagamento e reparo.
+- Pagamento mock autorizado pelo professor e integracao da liberacao com Execucao.
 - Autenticacao por CPF e autorizacao por cliente.
 - Terraform, Kubernetes, Kong e CD independente para a Fase 4.
 - New Relic distribuido, qualidade no CI e evidencias finais.

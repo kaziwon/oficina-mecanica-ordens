@@ -31,6 +31,8 @@ public static class DependencyInjection
         services.AddScoped<ObterSagaAberturaUseCase>();
         services.AddScoped<CancelarEntradaExecucaoUseCase>();
         services.AddScoped<ProcessarRespostaAberturaUseCase>();
+        services.AddScoped<ProcessarEventoDiagnosticoUseCase>();
+        services.AddScoped<ProcessarRespostaOrcamentoUseCase>();
         services.AddScoped<IntegracaoCleanController>();
         services.AddScoped<SagaAberturaCleanController>();
         services.AddDbContext<AppDbContext>((provider, options) =>

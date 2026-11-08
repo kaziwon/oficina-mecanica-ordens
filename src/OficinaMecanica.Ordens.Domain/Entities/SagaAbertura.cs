@@ -7,6 +7,12 @@ public class SagaAbertura
     public Guid PedidoRegistroId { get; set; }
     public Guid? PedidoCancelamentoId { get; set; }
     public Guid? ExecucaoId { get; set; }
+    public Guid? EventoDiagnosticoConcluidoId { get; set; }
+    public Guid? PedidoOrcamentoId { get; set; }
+    public Guid? OrcamentoId { get; set; }
+    public decimal? ValorOrcamento { get; set; }
+    public DateTime? DiagnosticoIniciadoEm { get; set; }
+    public DateTime? DiagnosticoConcluidoEm { get; set; }
     public StatusSagaAbertura Status { get; set; }
     public string CorrelationId { get; set; } = string.Empty;
     public string? Motivo { get; set; }
@@ -66,6 +72,61 @@ public class SagaAbertura
         if (Status != StatusSagaAbertura.CompensacaoPendente) return;
         Status = aceito ? StatusSagaAbertura.Compensada : StatusSagaAbertura.FalhaRequerIntervencao;
         if (!aceito) Motivo = motivo;
+        Alterada();
+    }
+
+    public bool RegistrarDiagnostico(Guid execucaoId, DateTime inicio)
+    {
+        if (Status is StatusSagaAbertura.Compensada or StatusSagaAbertura.RegistroRecusado) return false;
+        if ((ExecucaoId.HasValue && ExecucaoId != execucaoId)
+            || (DiagnosticoIniciadoEm.HasValue && DiagnosticoIniciadoEm != inicio))
+            throw new InvalidOperationException("Diagnostico diverge da execucao conhecida.");
+        ExecucaoId = execucaoId;
+        DiagnosticoIniciadoEm = inicio;
+        if (Status is StatusSagaAbertura.AguardandoRegistro or StatusSagaAbertura.RegistroConfirmado)
+            Status = StatusSagaAbertura.EmDiagnostico;
+        Alterada();
+        return true;
+    }
+
+    public bool SolicitarOrcamento(Guid eventoId, Guid execucaoId, DateTime inicio, DateTime fim)
+    {
+        if (EventoDiagnosticoConcluidoId.HasValue)
+        {
+            if (EventoDiagnosticoConcluidoId != eventoId)
+                throw new InvalidOperationException("Outro diagnostico ja foi concluido nesta Saga.");
+            return false;
+        }
+        if (Status == StatusSagaAbertura.CompensacaoPendente)
+            throw new InvalidOperationException("Aguarde a resposta da compensacao antes de processar o diagnostico.");
+        if (!RegistrarDiagnostico(execucaoId, inicio)) return false;
+        EventoDiagnosticoConcluidoId = eventoId;
+        DiagnosticoConcluidoEm = fim;
+        if (Status == StatusSagaAbertura.FalhaRequerIntervencao)
+        {
+            Alterada();
+            return false;
+        }
+        PedidoOrcamentoId = Guid.NewGuid();
+        Status = StatusSagaAbertura.OrcamentoPendente;
+        Alterada();
+        return true;
+    }
+
+    public void ConfirmarOrcamento(Guid orcamentoId, decimal valor)
+    {
+        if (Status != StatusSagaAbertura.OrcamentoPendente) return;
+        OrcamentoId = orcamentoId;
+        ValorOrcamento = valor;
+        Status = StatusSagaAbertura.OrcamentoGerado;
+        Alterada();
+    }
+
+    public void RecusarOrcamento(string motivo)
+    {
+        if (Status != StatusSagaAbertura.OrcamentoPendente) return;
+        Status = StatusSagaAbertura.FalhaRequerIntervencao;
+        Motivo = motivo;
         Alterada();
     }
 

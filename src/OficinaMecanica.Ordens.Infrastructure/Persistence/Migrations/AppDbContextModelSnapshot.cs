@@ -130,6 +130,15 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CriadaEm")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime?>("DiagnosticoConcluidoEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DiagnosticoIniciadoEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("EventoDiagnosticoConcluidoId")
+                        .HasColumnType("char(36)");
+
                     b.Property<Guid?>("ExecucaoId")
                         .HasColumnType("char(36)");
 
@@ -137,10 +146,16 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("varchar(1000)");
 
+                    b.Property<Guid?>("OrcamentoId")
+                        .HasColumnType("char(36)");
+
                     b.Property<Guid>("OrdemServicoId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid?>("PedidoCancelamentoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("PedidoOrcamentoId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid>("PedidoRegistroId")
@@ -150,6 +165,10 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)");
+
+                    b.Property<decimal?>("ValorOrcamento")
+                        .HasPrecision(11, 2)
+                        .HasColumnType("decimal(11,2)");
 
                     b.Property<long>("Versao")
                         .IsConcurrencyToken()

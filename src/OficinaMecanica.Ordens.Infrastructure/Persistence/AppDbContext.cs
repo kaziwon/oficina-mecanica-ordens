@@ -28,6 +28,7 @@ public class AppDbContext : DbContext
             entity.Property(item => item.CorrelationId).HasMaxLength(100).IsRequired();
             entity.Property(item => item.Motivo).HasMaxLength(1000);
             entity.Property(item => item.Versao).IsConcurrencyToken();
+            entity.Property(item => item.ValorOrcamento).HasPrecision(11, 2);
             entity.HasOne<OrdemServico>().WithOne().HasForeignKey<SagaAbertura>(item => item.OrdemServicoId)
                 .OnDelete(DeleteBehavior.Restrict);
         });

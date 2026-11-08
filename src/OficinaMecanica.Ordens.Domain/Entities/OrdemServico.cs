@@ -12,6 +12,25 @@ public class OrdemServico
     public Veiculo? Veiculo { get; set; }
     public ICollection<HistoricoStatusOrdemServico> Historico { get; set; } = [];
 
+    public void RegistrarDiagnostico(DateTime inicio)
+    {
+        if (Status == StatusOrdemServico.Recebida) RegistrarStatus(StatusOrdemServico.EmDiagnostico, inicio);
+    }
+
+    public void AguardarAprovacao(DateTime inicio, DateTime orcamentoCriadoEm)
+    {
+        RegistrarDiagnostico(inicio);
+        if (Status == StatusOrdemServico.EmDiagnostico)
+            RegistrarStatus(StatusOrdemServico.AguardandoAprovacao, orcamentoCriadoEm);
+    }
+
+    private void RegistrarStatus(StatusOrdemServico status, DateTime registradoEm)
+    {
+        Status = status;
+        Historico.Add(new HistoricoStatusOrdemServico
+        { Id = Guid.NewGuid(), OrdemServicoId = Id, Status = status, RegistradoEm = registradoEm });
+    }
+
     public void CancelarEntrada()
     {
         if (Status == StatusOrdemServico.Cancelada) return;

@@ -26,7 +26,7 @@ Uma resposta so e removida da fila depois da persistencia. Se o processo cair
 entre enviar e marcar como publicado, pode haver outra entrega; a identificacao
 e a versao impedem duplicar a entrada ou o historico.
 
-## Subir os dois servicos
+## Subir o ambiente integrado
 
 Mantenha os repositorios lado a lado, nas branches/commits compativeis:
 
@@ -34,6 +34,7 @@ Mantenha os repositorios lado a lado, nas branches/commits compativeis:
 Fiap/
   oficina-mecanica-ordens/
   oficina-mecanica-execucao/
+  oficina-mecanica-cobranca/
 ```
 
 Com Docker Desktop aberto, execute na raiz de **Ordens**:
@@ -42,7 +43,8 @@ Com Docker Desktop aberto, execute na raiz de **Ordens**:
 docker compose -f compose.integracao.yml up --build -d
 ```
 
-O comando cria duas APIs, MySQL, MongoDB e ElasticMQ. O pequeno servico
+O Compose atual inclui tambem o trecho de diagnostico/orcamento: cria tres APIs,
+dois MySQL separados, MongoDB e ElasticMQ. O pequeno servico
 `filas-permissoes` prepara o volume e encerra; o simulador roda sem root.
 Os volumes desse Compose sao separados dos volumes dos projetos individuais.
 As credenciais explicitas no arquivo sao somente de desenvolvimento.
@@ -57,11 +59,13 @@ export EXECUCAO_PATH=/caminho/para/oficina-mecanica-execucao
 |---|---|
 | Swagger de Ordens | http://localhost:18091/swagger/index.html |
 | Swagger de Execucao | http://localhost:18092/swagger/index.html |
+| Swagger de Cobranca | http://localhost:18093/swagger/index.html |
 | SQS simulado | http://localhost:9324 |
 | MySQL de Ordens | 127.0.0.1:3309 |
+| MySQL de Cobranca | 127.0.0.1:3310 |
 | MongoDB de Execucao | 127.0.0.1:27019 |
 
-As filas sao `execucao-comandos` e `ordens-eventos`, cada uma com sua DLQ. Apos
+As filas sao `execucao-comandos`, `cobranca-comandos` e `ordens-eventos`, cada uma com sua DLQ. Apos
 cinco recebimentos sem confirmacao, uma mensagem vai para a respectiva DLQ.
 Mensagens malformadas nao alteram uma OS e nao produzem uma recusa de negocio
 inventada. Precisam de investigacao/reprocessamento, assim como falhas tecnicas
@@ -87,7 +91,8 @@ O provisionamento e as permissoes das filas reais ficam para o deploy futuro.
    consulte `GET /api/execucoes/ID_DA_EXECUCAO`. Ela estara `AguardandoDiagnostico`.
 
 O status operacional da OS continua `Recebida`. Este trecho nao significa que
-o diagnostico ja comecou e ainda nao sincroniza suas transicoes posteriores.
+o diagnostico ja comecou. O [segundo trecho](03-diagnostico-orcamento.md)
+sincroniza inicio/conclusao e gera o orcamento.
 
 Para compensar essa entrada, em Ordens:
 
@@ -104,8 +109,9 @@ ate Execucao responder. Depois, `Compensada` confirma o cancelamento nos dois
 servicos, sem apagar cliente, veiculo ou historico. Repetir o pedido nao cria
 um segundo comando.
 
-Se ja iniciou o diagnostico, o resultado sera `FalhaRequerIntervencao`; o
-cancelamento automatico nao desfaz trabalho em andamento. Este endpoint nao e
+Se Ordens ja recebeu o inicio, recusa o pedido com HTTP 409. Se a compensacao
+foi enviada antes dessa atualizacao, Execucao recusa e o resultado sera
+`FalhaRequerIntervencao`. O cancelamento automatico nao desfaz trabalho em andamento. Este endpoint nao e
 um cancelamento geral de reparos, orcamentos ou pagamentos.
 
 Uma entrada manual com dados divergentes tambem exige intervencao: a OS nao e

@@ -8,5 +8,6 @@ public interface ISagaAberturaDataSource
     SagaAbertura? ObterPorId(Guid id);
     SagaAbertura? ObterPorOrdemServicoId(Guid id);
     bool FoiProcessada(Guid messageId);
-    void Salvar(SagaAbertura saga, Guid? mensagemRecebidaId, MensagemIntegracao? mensagemSaida, bool cancelarOrdem);
+    void Salvar(SagaAbertura saga, Guid? mensagemRecebidaId, MensagemIntegracao? mensagemSaida,
+        bool cancelarOrdem, StatusOrdemServico? novoStatus = null, DateTime? registradoEm = null);
 }

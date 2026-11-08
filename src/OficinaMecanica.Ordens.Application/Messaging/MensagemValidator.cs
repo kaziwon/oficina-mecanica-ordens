@@ -17,5 +17,16 @@ public static class MensagemValidator
             || mensagem.Payload.DescricaoSolicitacao?.Length > 1000
             || mensagem.Payload.Motivo?.Length > 1000 || mensagem.Payload.Codigo?.Length > 100)
             throw new ValidacaoException("Dados da mensagem de integracao invalidos.");
+        if (mensagem.Payload.Diagnostico?.Length > 2000 || mensagem.Payload.OrcamentoId == Guid.Empty
+            || (mensagem.Payload.Itens is not null && mensagem.Payload.Itens.Any(item => item is null)))
+            throw new ValidacaoException("Snapshot de diagnostico ou orcamento invalido.");
+        if (mensagem.Type is "RegistrarExecucao" or "CancelarEntradaExecucao" or "ExecucaoRegistrada"
+            or "RegistroExecucaoRecusado" or "EntradaExecucaoCancelada" or "CancelamentoEntradaExecucaoRecusado")
+        {
+            var dados = mensagem.Payload;
+            if (dados.Diagnostico is not null || dados.Itens is not null || dados.OrcamentoId.HasValue
+                || dados.ValorTotal.HasValue || dados.DiagnosticoIniciadoEm.HasValue || dados.DiagnosticoConcluidoEm.HasValue)
+                throw new ValidacaoException("Mensagem de abertura nao aceita dados de diagnostico ou orcamento.");
+        }
     }
 }

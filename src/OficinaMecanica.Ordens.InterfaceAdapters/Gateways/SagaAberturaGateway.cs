@@ -12,6 +12,7 @@ public class SagaAberturaGateway : ISagaAberturaGateway
     public SagaAbertura? ObterPorId(Guid id) => _source.ObterPorId(id);
     public SagaAbertura? ObterPorOrdemServicoId(Guid id) => _source.ObterPorOrdemServicoId(id);
     public bool FoiProcessada(Guid messageId) => _source.FoiProcessada(messageId);
-    public void Salvar(SagaAbertura saga, Guid? mensagemRecebidaId, MensagemIntegracao? mensagemSaida, bool cancelarOrdem = false)
-        => _source.Salvar(saga, mensagemRecebidaId, mensagemSaida, cancelarOrdem);
+    public void Salvar(SagaAbertura saga, Guid? mensagemRecebidaId, MensagemIntegracao? mensagemSaida,
+        bool cancelarOrdem = false, StatusOrdemServico? novoStatus = null, DateTime? registradoEm = null)
+        => _source.Salvar(saga, mensagemRecebidaId, mensagemSaida, cancelarOrdem, novoStatus, registradoEm);
 }
