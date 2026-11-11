@@ -50,8 +50,10 @@ public class EfOrdemServicoDataSource : IOrdemServicoDataSource
         }
 
         var porStatus = query.OrderBy(item => item.Status == StatusOrdemServico.EmExecucao ? 0
-            : item.Status == StatusOrdemServico.AguardandoAprovacao ? 1
-            : item.Status == StatusOrdemServico.EmDiagnostico ? 2 : 3);
+            : item.Status == StatusOrdemServico.PagamentoConfirmado ? 1
+            : item.Status == StatusOrdemServico.AguardandoPagamento ? 2
+            : item.Status == StatusOrdemServico.AguardandoAprovacao ? 3
+            : item.Status == StatusOrdemServico.EmDiagnostico ? 4 : 5);
 
         return (maisNovasPrimeiro ? porStatus.ThenByDescending(item => item.CriadaEm)
             : porStatus.ThenBy(item => item.CriadaEm)).ThenBy(item => item.Id).ToList();

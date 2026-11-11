@@ -20,6 +20,15 @@ public static class MensagemValidator
         if (mensagem.Payload.Diagnostico?.Length > 2000 || mensagem.Payload.OrcamentoId == Guid.Empty
             || (mensagem.Payload.Itens is not null && mensagem.Payload.Itens.Any(item => item is null)))
             throw new ValidacaoException("Snapshot de diagnostico ou orcamento invalido.");
+        if (mensagem.Payload.PagamentoId == Guid.Empty || mensagem.Payload.ProvedorId?.Length > 100
+            || mensagem.Payload.Moeda?.Length > 3)
+            throw new ValidacaoException("Identificacao de pagamento invalida.");
+        if ((mensagem.Payload.PagamentoId.HasValue || mensagem.Payload.ProvedorId is not null || mensagem.Payload.Moeda is not null)
+            && mensagem.Type is not ("SolicitarPagamento" or "PagamentoConfirmado" or "PagamentoRecusado" or "FalhaProcessamentoPagamento"))
+            throw new ValidacaoException("O tipo de mensagem nao admite dados de pagamento.");
+        if (mensagem.Payload.OrcamentoCriadoEm.HasValue
+            && mensagem.Type is not ("OrcamentoAprovado" or "OrcamentoRecusado"))
+            throw new ValidacaoException("O tipo de mensagem nao admite a data de criacao do orcamento.");
         if (mensagem.Type is "RegistrarExecucao" or "CancelarEntradaExecucao" or "ExecucaoRegistrada"
             or "RegistroExecucaoRecusado" or "EntradaExecucaoCancelada" or "CancelamentoEntradaExecucaoRecusado")
         {

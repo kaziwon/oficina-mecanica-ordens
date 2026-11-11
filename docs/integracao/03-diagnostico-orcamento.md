@@ -149,9 +149,9 @@ docker compose -f compose.integracao.yml restart elasticmq
 
 ## Limite deste incremento
 
-Ainda nao integra a resposta de aprovacao/recusa do cliente na Saga, o pagamento
-mock autorizado pelo professor, reserva de pecas, liberacao/finalizacao de
-reparos ou compensacoes financeiras. As APIs manuais de aprovar/recusar e
-registrar pendencia continuam locais a Cobranca. Nao representam ainda uma
-notificacao aos outros servicos. O teste HTTP deste trecho nao substitui o BDD
-do fluxo completo exigido na entrega final.
+O [incremento seguinte](04-resposta-orcamento.md) integra a aprovacao/recusa do
+orcamento na Saga. O pagamento mock esta no [guia 05](05-pagamento-mock.md).
+Ainda faltam reserva de pecas, liberacao e
+finalizacao dos reparos e compensacoes financeiras. Registrar uma pendencia de
+pagamento ainda e local a Cobranca. O teste HTTP deste trecho nao substitui o
+BDD do fluxo completo exigido na entrega final.

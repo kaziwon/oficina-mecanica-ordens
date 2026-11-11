@@ -32,6 +32,14 @@ O [guia de diagnostico e orcamento](docs/integracao/03-diagnostico-orcamento.md)
 documenta a integracao dos tres servicos, reentregas, recusas e o teste HTTP
 automatizado. Nenhum desses comandos cria recursos AWS.
 
+O [guia de aprovacao e recusa](docs/integracao/04-resposta-orcamento.md)
+mostra como a resposta chega a Saga: aprovacao aguarda pagamento sem liberar
+reparos; recusa solicita cancelamento em Execucao e aguarda a confirmacao.
+
+O [guia de pagamento mock](docs/integracao/05-pagamento-mock.md) integra token,
+chamada HTTP idempotente e resultado financeiro na Saga. A confirmacao fica
+visivel na OS, mas a liberacao do reparo ainda e uma etapa posterior.
+
 ## Clean Architecture
 
 ```text
@@ -174,7 +182,7 @@ Misturar as alternativas retorna HTTP 400. CPF/CNPJ ou placa duplicados retornam
 
 O login e os healthchecks sao publicos. As operacoes de cadastro e OS exigem JWT
 administrativo. `ordenacao` aceita `maisAntigo` ou `maisNovo`. A prioridade de
-status e EmExecucao, AguardandoAprovacao, EmDiagnostico e Recebida. Finalizadas,
+status e EmExecucao, PagamentoConfirmado, AguardandoPagamento, AguardandoAprovacao, EmDiagnostico e Recebida. Finalizadas,
 entregues e canceladas ficam fora da listagem operacional; a consulta por ID
 preserva o acesso ao historico.
 
@@ -226,8 +234,8 @@ No futuro deploy, a aplicacao das migrations sera uma etapa controlada da entreg
 
 ## Proximos incrementos
 
-- Proximas etapas da Saga: resposta ao orcamento, pagamento e reparo.
-- Pagamento mock autorizado pelo professor e integracao da liberacao com Execucao.
+- Proximas etapas da Saga: liberacao e finalizacao do reparo, com suas compensacoes.
+- Reconciliacao, nova tentativa de negocio e compensacoes financeiras.
 - Autenticacao por CPF e autorizacao por cliente.
 - Terraform, Kubernetes, Kong e CD independente para a Fase 4.
 - New Relic distribuido, qualidade no CI e evidencias finais.

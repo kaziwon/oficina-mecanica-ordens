@@ -291,11 +291,13 @@ public class FluxoOrdensTests
         }
 
         var lista = (await client.GetFromJsonAsync<List<OrdemServicoResponseDto>>("/api/ordensservico", ApiTestHelper.Json))!;
-        Assert.Equal(5, lista.Count);
+        Assert.Equal(7, lista.Count);
         Assert.Equal(StatusOrdemServico.EmExecucao, lista[0].Status);
-        Assert.Equal(StatusOrdemServico.AguardandoAprovacao, lista[1].Status);
-        Assert.Equal(StatusOrdemServico.EmDiagnostico, lista[2].Status);
-        Assert.True(lista[3].CriadaEm < lista[4].CriadaEm);
+        Assert.Equal(StatusOrdemServico.PagamentoConfirmado, lista[1].Status);
+        Assert.Equal(StatusOrdemServico.AguardandoPagamento, lista[2].Status);
+        Assert.Equal(StatusOrdemServico.AguardandoAprovacao, lista[3].Status);
+        Assert.Equal(StatusOrdemServico.EmDiagnostico, lista[4].Status);
+        Assert.True(lista[5].CriadaEm < lista[6].CriadaEm);
         var filtrada = (await client.GetFromJsonAsync<List<OrdemServicoResponseDto>>(
             "/api/ordensservico?status=Recebida&ordenacao=maisNovo", ApiTestHelper.Json))!;
         Assert.Equal(2, filtrada.Count);
