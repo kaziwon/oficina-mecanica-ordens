@@ -31,6 +31,14 @@ public class OrdemServico
             RegistrarStatus(StatusOrdemServico.AguardandoPagamento, respondidoEm);
     }
 
+    public void ConfirmarPagamento(DateTime confirmadoEm)
+    {
+        if (Status == StatusOrdemServico.PagamentoConfirmado) return;
+        if (Status != StatusOrdemServico.AguardandoPagamento)
+            throw new InvalidOperationException("A OS nao aguarda pagamento.");
+        RegistrarStatus(StatusOrdemServico.PagamentoConfirmado, confirmadoEm);
+    }
+
     public void CancelarPorRecusaOrcamento(DateTime registradoEm)
     {
         if (Status == StatusOrdemServico.Cancelada) return;

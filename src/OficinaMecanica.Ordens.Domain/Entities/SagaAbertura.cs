@@ -16,6 +16,10 @@ public class SagaAbertura
     public DateTime? OrcamentoCriadoEm { get; set; }
     public DateTime? OrcamentoRespondidoEm { get; set; }
     public Guid? PedidoCancelamentoPorRecusaId { get; set; }
+    public Guid? PedidoPagamentoId { get; set; }
+    public Guid? PagamentoId { get; set; }
+    public string? PagamentoProvedorId { get; set; }
+    public DateTime? PagamentoConfirmadoEm { get; set; }
     public DateTime? DiagnosticoIniciadoEm { get; set; }
     public DateTime? DiagnosticoConcluidoEm { get; set; }
     public StatusSagaAbertura Status { get; set; }
@@ -153,6 +157,7 @@ public class SagaAbertura
         Motivo = motivo;
         Status = aprovado ? StatusSagaAbertura.AguardandoPagamento : StatusSagaAbertura.CancelamentoPorRecusaPendente;
         if (!aprovado) PedidoCancelamentoPorRecusaId = Guid.NewGuid();
+        else PedidoPagamentoId = Guid.NewGuid();
         Alterada();
         return true;
     }
@@ -162,6 +167,18 @@ public class SagaAbertura
         if (Status != StatusSagaAbertura.CancelamentoPorRecusaPendente) return;
         Status = aceito ? StatusSagaAbertura.OrcamentoRecusado : StatusSagaAbertura.FalhaRequerIntervencao;
         if (!aceito) Motivo = motivo;
+        Alterada();
+    }
+
+    public void RegistrarResultadoPagamento(Guid pagamentoId, string? provedorId, bool confirmado, DateTime ocorridoEm, string? motivo)
+    {
+        if (Status == StatusSagaAbertura.PagamentoConfirmado && confirmado && PagamentoId == pagamentoId && PagamentoProvedorId == provedorId) return;
+        if (Status != StatusSagaAbertura.AguardandoPagamento || OrcamentoAprovado != true)
+            throw new InvalidOperationException("A Saga nao aguarda resultado de pagamento.");
+        PagamentoId = pagamentoId; PagamentoProvedorId = provedorId;
+        Status = confirmado ? StatusSagaAbertura.PagamentoConfirmado : StatusSagaAbertura.FalhaRequerIntervencao;
+        if (confirmado) PagamentoConfirmadoEm = ocorridoEm;
+        else Motivo = motivo;
         Alterada();
     }
 

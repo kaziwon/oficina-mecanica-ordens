@@ -150,7 +150,8 @@ docker compose -f compose.integracao.yml restart elasticmq
 ## Limite deste incremento
 
 O [incremento seguinte](04-resposta-orcamento.md) integra a aprovacao/recusa do
-orcamento na Saga. Ainda faltam pagamento mock, reserva de pecas, liberacao e
+orcamento na Saga. O pagamento mock esta no [guia 05](05-pagamento-mock.md).
+Ainda faltam reserva de pecas, liberacao e
 finalizacao dos reparos e compensacoes financeiras. Registrar uma pendencia de
 pagamento ainda e local a Cobranca. O teste HTTP deste trecho nao substitui o
 BDD do fluxo completo exigido na entrega final.

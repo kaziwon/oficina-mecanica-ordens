@@ -164,6 +164,16 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("OrdemServicoId")
                         .HasColumnType("char(36)");
 
+                    b.Property<DateTime?>("PagamentoConfirmadoEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("PagamentoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("PagamentoProvedorId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<Guid?>("PedidoCancelamentoId")
                         .HasColumnType("char(36)");
 
@@ -171,6 +181,9 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
                         .HasColumnType("char(36)");
 
                     b.Property<Guid?>("PedidoOrcamentoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("PedidoPagamentoId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid>("PedidoRegistroId")

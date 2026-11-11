@@ -4,7 +4,8 @@
 
 As APIs administrativas de Cobranca continuam iguais. Para um orcamento criado
 pela Saga, agora elas tambem notificam Ordens. Um orcamento manual, sem Saga,
-continua independente. Ainda nao existe pagamento mock nem liberacao do reparo.
+continua independente. O [incremento de pagamento](05-pagamento-mock.md) agora
+complementa este fluxo quando habilitado; a liberacao do reparo continua pendente.
 
 ```text
 Aprovar no Billing -> MySQL: resposta + historico + evento na outbox
@@ -80,7 +81,7 @@ python3 infra/local/testar-resposta-orcamento.py
 
 O script utiliza somente HTTP. Gera dois orcamentos a partir de diagnosticos,
 testa aprovacao, recusa, repeticoes e resposta contraditoria. Confere que a
-aprovacao nao cria pagamento nem libera reparos e que a recusa cancela as duas
+aprovacao nao libera reparos e que a recusa cancela as duas
 filas sem apagar o diagnostico. Cria apenas dados ficticios locais.
 
 Os roteiros anteriores tambem continuam disponiveis:
@@ -118,7 +119,7 @@ MySQL real. Um registro sem contexto suficiente nao e respondido como se
 pudesse notificar uma Saga desconhecida.
 
 Respostas anteriores a esta versao nao sao publicadas retroativamente: nao ha
-reprocessamento automatico de aprovacoes/recusas historicas. A proxima etapa
-sera o pagamento mock e, depois, a liberacao de Execucao. Os testes HTTP deste
+reprocessamento automatico de aprovacoes/recusas historicas. O pagamento mock
+esta descrito no guia 05; depois vem a liberacao de Execucao. Os testes HTTP deste
 incremento nao substituem o BDD completo, a cobertura minima e o Sonar previstos
 para a entrega. Nada aqui provisiona recursos AWS.

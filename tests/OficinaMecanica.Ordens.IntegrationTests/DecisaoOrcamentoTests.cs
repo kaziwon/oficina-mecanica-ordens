@@ -43,7 +43,7 @@ public class DecisaoOrcamentoTests
         Assert.Equal(aprovado, saga.OrcamentoAprovado);
         Assert.Equal(aprovado ? StatusOrdemServico.AguardandoPagamento : StatusOrdemServico.AguardandoAprovacao, db.OrdensServico.Single().Status);
         Assert.Equal(aprovado ? 4 : 3, db.HistoricoStatus.Count());
-        Assert.Equal(aprovado ? 1 : 2, db.Outbox.Count());
+        Assert.Equal(2, db.Outbox.Count());
         Assert.Equal(2, db.Inbox.Count());
     }
 
@@ -87,7 +87,7 @@ public class DecisaoOrcamentoTests
         decisao.MessageId = Guid.NewGuid(); decisao.Type = "OrcamentoRecusado"; decisao.Payload.Motivo = "Outra resposta";
         Assert.Throws<InvalidOperationException>(() => Processar(factory, decisao));
         using var scope = factory.Services.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        Assert.Single(db.Inbox); Assert.Single(db.Outbox);
+        Assert.Single(db.Inbox); Assert.Equal(2, db.Outbox.Count());
         Assert.Equal(StatusSagaAbertura.AguardandoPagamento, db.SagasAbertura.Single().Status);
     }
 

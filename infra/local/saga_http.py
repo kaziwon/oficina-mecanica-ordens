@@ -14,10 +14,12 @@ COBRANCA = os.getenv("COBRANCA_URL", "http://localhost:18093").rstrip("/")
 PASSWORD = os.getenv("SAGA_ADMIN_PASSWORD", "LocalAdminSaga123")
 
 
-def chamar(base, rota, token=None, body=None, metodo="GET", status_esperado=None):
+def chamar(base, rota, token=None, body=None, metodo="GET", status_esperado=None, extra_headers=None):
     headers = {"Content-Type": "application/json", "X-Correlation-ID": "teste-saga-" + str(uuid.uuid4())}
     if token:
         headers["Authorization"] = "Bearer " + token
+    if extra_headers:
+        headers.update(extra_headers)
     request = Request(base + rota, data=json.dumps(body).encode() if body is not None else None,
                       headers=headers, method=metodo)
     try:
@@ -54,20 +56,35 @@ def cpf_teste():
 
 
 def criar_ordem(token):
+    letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    placa = "".join(secrets.choice(letras) for _ in range(3)) + str(secrets.randbelow(10))
+    placa += secrets.choice("ABCDEFGHIJ") + f"{secrets.randbelow(100):02d}"
     return chamar(ORDENS, "/api/ordensservico", token, {
         "cliente": {"nome": "Teste distribuido", "cpfCnpj": cpf_teste(),
                     "email": "teste@example.com", "telefone": "11999999999"},
-        "veiculo": {"placa": f"ABC{1000 + secrets.randbelow(9000)}", "marca": "Fiat", "modelo": "Uno", "ano": 2020},
+        "veiculo": {"placa": placa, "marca": "Fiat", "modelo": "Uno", "ano": 2020},
         "descricaoSolicitacao": "Revisar freios - " + str(uuid.uuid4())
     }, "POST")
 
 
 def aguardar_saga(token, ordem_id, esperado):
+    estados = {esperado} if isinstance(esperado, str) else set(esperado)
     limite = time.monotonic() + 90
     ultima = None
     while time.monotonic() < limite:
         ultima = chamar(ORDENS, f"/api/ordensservico/{ordem_id}/saga-abertura", token)
-        if ultima["status"] == esperado:
+        if ultima["status"] in estados:
             return ultima
         time.sleep(1)
     raise TimeoutError(f"Saga nao chegou a {esperado}: {ultima}")
+
+
+def preparar_orcamento(ordens_token, execucao_token, servico_id):
+    ordem = criar_ordem(ordens_token)
+    saga = aguardar_saga(ordens_token, ordem["id"], "RegistroConfirmado")
+    execucao_id = saga["execucaoId"]
+    chamar(EXECUCAO, f"/api/execucoes/{execucao_id}/iniciar-diagnostico", execucao_token, metodo="POST")
+    aguardar_saga(ordens_token, ordem["id"], "EmDiagnostico")
+    chamar(EXECUCAO, f"/api/execucoes/{execucao_id}/concluir-diagnostico", execucao_token,
+           {"diagnostico": "Revisao completa", "servicoIds": [servico_id], "pecasInsumos": []}, "POST")
+    return ordem, aguardar_saga(ordens_token, ordem["id"], "OrcamentoGerado")

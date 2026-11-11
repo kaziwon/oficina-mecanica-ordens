@@ -11,6 +11,9 @@ public class SagaAberturaResponseDto
     public decimal? ValorOrcamento { get; set; }
     public bool? OrcamentoAprovado { get; set; }
     public DateTime? OrcamentoRespondidoEm { get; set; }
+    public Guid? PagamentoId { get; set; }
+    public string? PagamentoProvedorId { get; set; }
+    public DateTime? PagamentoConfirmadoEm { get; set; }
     public DateTime? DiagnosticoIniciadoEm { get; set; }
     public DateTime? DiagnosticoConcluidoEm { get; set; }
     public StatusSagaAbertura Status { get; set; }

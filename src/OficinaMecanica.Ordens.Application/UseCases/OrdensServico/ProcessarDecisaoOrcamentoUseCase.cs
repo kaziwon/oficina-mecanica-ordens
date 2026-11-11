@@ -35,6 +35,24 @@ public class ProcessarDecisaoOrcamentoUseCase
             saga.ConfirmarOrcamento(dados.OrcamentoId.Value, dados.ValorTotal.Value);
         var alterada = saga.ResponderOrcamento(mensagem.MessageId, aprovado, criadoEm, mensagem.OccurredAt, dados.Motivo);
         MensagemIntegracao? comando = null;
+        if (alterada && aprovado)
+            comando = new MensagemIntegracao
+            {
+                MessageId = saga.PedidoPagamentoId!.Value,
+                Type = "SolicitarPagamento",
+                SagaId = saga.Id,
+                CausationId = mensagem.MessageId,
+                CorrelationId = saga.CorrelationId,
+                OccurredAt = DateTime.UtcNow,
+                Payload = new DadosMensagem
+                {
+                    OrdemServicoId = saga.OrdemServicoId,
+                    ExecucaoId = saga.ExecucaoId,
+                    OrcamentoId = saga.OrcamentoId,
+                    ValorTotal = saga.ValorOrcamento,
+                    Moeda = "BRL"
+                }
+            };
         if (alterada && !aprovado)
             comando = new MensagemIntegracao
             {

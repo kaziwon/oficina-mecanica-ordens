@@ -1,6 +1,28 @@
 name: oficina-fase4-integracao
 
 services:
+  pagamento-mock-permissoes:
+    image: mcr.microsoft.com/dotnet/aspnet:10.0
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["chown $$APP_UID:$$APP_UID /data"]
+    volumes: ["pagamento_mock:/data"]
+
+  pagamento-mock:
+    build:
+      context: ${COBRANCA_PATH:-../oficina-mecanica-cobranca}
+      dockerfile: tools/OficinaMecanica.PagamentoMock/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Mock__ConnectionString: Data Source=/data/pagamentos.db;Default Timeout=5
+      Mock__Resultado: ${PAGAMENTO_MOCK_RESULTADO:-approved}
+      Mock__ClientId: oficina-local
+      Mock__ClientSecret: segredo-do-mock-somente-local
+    ports: ["127.0.0.1:18094:8080"]
+    volumes: ["pagamento_mock:/data"]
+    depends_on:
+      pagamento-mock-permissoes: { condition: service_completed_successfully }
+
   mysql-cobranca:
     image: mysql:8.4
     environment:
@@ -22,6 +44,12 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Server=mysql-cobranca;Database=cobranca;User=cobranca_app;Password=LocalCobrancaSaga123
+      PagamentoMock__Enabled: "true"
+      PagamentoMock__BaseUrl: http://pagamento-mock:8080/
+      PagamentoMock__ClientId: oficina-local
+      PagamentoMock__ClientSecret: segredo-do-mock-somente-local
+      PagamentoMock__IntervaloRetentativaSegundos: "2"
+      PagamentoMock__MaxTentativas: "3"
       Database__ApplyMigrations: "true"
       JwtSettings__SecretKey: chave-local-da-integracao-fase4-1234567890
       AdminUserSettings__Username: admin
@@ -31,6 +59,7 @@ services:
     ports: ["127.0.0.1:18093:8080"]
     depends_on:
       mysql-cobranca: { condition: service_healthy }
+      pagamento-mock: { condition: service_started }
       elasticmq: { condition: service_started }
 
   mysql:
@@ -117,6 +146,7 @@ services:
       elasticmq: { condition: service_started }
 
 volumes:
+  pagamento_mock:
   cobranca_integracao:
   ordens_integracao:
   execucao_integracao:
