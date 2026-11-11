@@ -139,11 +139,17 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("EventoDiagnosticoConcluidoId")
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid?>("EventoPagamentoConfirmadoId")
+                        .HasColumnType("char(36)");
+
                     b.Property<Guid?>("EventoRespostaOrcamentoId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid?>("ExecucaoId")
                         .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("ExecucaoLiberadaEm")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("Motivo")
                         .HasMaxLength(1000)
@@ -178,6 +184,9 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
                         .HasColumnType("char(36)");
 
                     b.Property<Guid?>("PedidoCancelamentoPorRecusaId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("PedidoLiberacaoExecucaoId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid?>("PedidoOrcamentoId")

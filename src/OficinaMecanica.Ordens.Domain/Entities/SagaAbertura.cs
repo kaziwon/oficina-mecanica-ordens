@@ -20,6 +20,9 @@ public class SagaAbertura
     public Guid? PagamentoId { get; set; }
     public string? PagamentoProvedorId { get; set; }
     public DateTime? PagamentoConfirmadoEm { get; set; }
+    public Guid? EventoPagamentoConfirmadoId { get; set; }
+    public Guid? PedidoLiberacaoExecucaoId { get; set; }
+    public DateTime? ExecucaoLiberadaEm { get; set; }
     public DateTime? DiagnosticoIniciadoEm { get; set; }
     public DateTime? DiagnosticoConcluidoEm { get; set; }
     public StatusSagaAbertura Status { get; set; }
@@ -170,9 +173,13 @@ public class SagaAbertura
         Alterada();
     }
 
-    public void RegistrarResultadoPagamento(Guid pagamentoId, string? provedorId, bool confirmado, DateTime ocorridoEm, string? motivo)
+    public bool RegistrarResultadoPagamento(Guid pagamentoId, string? provedorId, bool confirmado, DateTime ocorridoEm, string? motivo)
     {
-        if (Status == StatusSagaAbertura.PagamentoConfirmado && confirmado && PagamentoId == pagamentoId && PagamentoProvedorId == provedorId) return;
+        if (PagamentoConfirmadoEm.HasValue)
+        {
+            if (confirmado && PagamentoId == pagamentoId && PagamentoProvedorId == provedorId) return false;
+            throw new InvalidOperationException("O pagamento confirmado nao pode ser substituido por outro resultado.");
+        }
         if (Status != StatusSagaAbertura.AguardandoPagamento || OrcamentoAprovado != true)
             throw new InvalidOperationException("A Saga nao aguarda resultado de pagamento.");
         PagamentoId = pagamentoId; PagamentoProvedorId = provedorId;
@@ -180,6 +187,33 @@ public class SagaAbertura
         if (confirmado) PagamentoConfirmadoEm = ocorridoEm;
         else Motivo = motivo;
         Alterada();
+        return true;
+    }
+
+    public void SolicitarLiberacaoExecucao(Guid confirmacaoPagamentoId)
+    {
+        if (Status != StatusSagaAbertura.PagamentoConfirmado || !PagamentoConfirmadoEm.HasValue
+            || OrcamentoAprovado != true || !PagamentoId.HasValue || !OrcamentoId.HasValue
+            || !ExecucaoId.HasValue || !ValorOrcamento.HasValue || ValorOrcamento <= 0
+            || string.IsNullOrWhiteSpace(PagamentoProvedorId)
+            || confirmacaoPagamentoId == Guid.Empty || PedidoLiberacaoExecucaoId.HasValue)
+            throw new InvalidOperationException("A Saga nao permite solicitar liberacao de execucao.");
+        EventoPagamentoConfirmadoId = confirmacaoPagamentoId;
+        PedidoLiberacaoExecucaoId = Guid.NewGuid();
+        Status = StatusSagaAbertura.LiberacaoExecucaoPendente;
+        Alterada();
+    }
+
+    public bool RegistrarRespostaLiberacao(bool aceita, DateTime ocorridoEm, string? motivo)
+    {
+        if (Status == StatusSagaAbertura.ExecucaoLiberada && aceita) return false;
+        if (Status != StatusSagaAbertura.LiberacaoExecucaoPendente)
+            throw new InvalidOperationException("A Saga nao aguarda esta resposta de liberacao.");
+        Status = aceita ? StatusSagaAbertura.ExecucaoLiberada : StatusSagaAbertura.FalhaRequerIntervencao;
+        if (aceita) ExecucaoLiberadaEm = ocorridoEm;
+        else Motivo = motivo;
+        Alterada();
+        return true;
     }
 
     private void Alterada() { Versao++; AtualizadaEm = DateTime.UtcNow; }

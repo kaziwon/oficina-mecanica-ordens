@@ -17,6 +17,7 @@ public static class SagaAberturaPresenter
         PagamentoId = saga.PagamentoId,
         PagamentoProvedorId = saga.PagamentoProvedorId,
         PagamentoConfirmadoEm = saga.PagamentoConfirmadoEm,
+        ExecucaoLiberadaEm = saga.ExecucaoLiberadaEm,
         DiagnosticoIniciadoEm = saga.DiagnosticoIniciadoEm,
         DiagnosticoConcluidoEm = saga.DiagnosticoConcluidoEm,
         Status = saga.Status,

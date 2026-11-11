@@ -15,15 +15,15 @@ def main():
     ordem, saga = preparar(ordens_token, execucao_token, servico["id"])
     for _ in range(2):
         chamar(COBRANCA, f"/api/orcamentos/{saga['orcamentoId']}/aprovar", cobranca_token, metodo="POST")
-    atual = aguardar_saga(ordens_token, ordem["id"], ("AguardandoPagamento", "PagamentoConfirmado"))
+    atual = aguardar_saga(ordens_token, ordem["id"], ("AguardandoPagamento", "PagamentoConfirmado", "LiberacaoExecucaoPendente", "ExecucaoLiberada"))
     assert atual["orcamentoAprovado"] is True
-    assert chamar(ORDENS, f"/api/ordensservico/{ordem['id']}", ordens_token)["status"] in ("AguardandoPagamento", "PagamentoConfirmado")
-    assert chamar(EXECUCAO, f"/api/execucoes/{saga['execucaoId']}", execucao_token)["status"] == "AguardandoLiberacao"
+    assert chamar(ORDENS, f"/api/ordensservico/{ordem['id']}", ordens_token)["status"] in ("AguardandoPagamento", "PagamentoConfirmado", "AguardandoExecucao")
+    assert chamar(EXECUCAO, f"/api/execucoes/{saga['execucaoId']}", execucao_token)["status"] in ("AguardandoLiberacao", "AguardandoExecucao")
     orcamento = chamar(COBRANCA, f"/api/orcamentos/{saga['orcamentoId']}", cobranca_token)
     assert orcamento["status"] == "Aprovado" and len(orcamento["historico"]) == 2
     chamar(COBRANCA, f"/api/orcamentos/{saga['orcamentoId']}/recusar", cobranca_token,
            {"motivo": "Nao pode trocar a resposta"}, "POST", status_esperado=409)
-    print(f"OK: OS {ordem['id']} aprovada; reparo continua bloqueado mesmo com pagamento automatico habilitado")
+    print(f"OK: OS {ordem['id']} aprovada; reparo nao foi iniciado automaticamente")
 
     ordem, saga = preparar(ordens_token, execucao_token, servico["id"])
     for _ in range(2):

@@ -18,8 +18,8 @@ primeiro incremento da Fase 4, em repositorio independente da entrega da Fase 3.
 As OS novas ficam em `Recebida`. A abertura agora grava tambem a Saga e o
 pedido de entrada em Execucao na mesma transacao. O worker publica esse pedido
 quando habilitado. Este servico nao possui tabelas de estoque, orcamentos ou
-pagamentos. Inicio/conclusao de diagnostico e geracao de orcamento ja estao
-conectados por mensagens. Pagamento e reparo ainda serao conectados.
+pagamentos. Diagnostico, orcamento, pagamento mock e autorizacao da fila de
+execucao ja estao conectados por mensagens. O reparo nao comeca automaticamente.
 
 ## Primeiro contrato de integracao
 
@@ -38,7 +38,12 @@ reparos; recusa solicita cancelamento em Execucao e aguarda a confirmacao.
 
 O [guia de pagamento mock](docs/integracao/05-pagamento-mock.md) integra token,
 chamada HTTP idempotente e resultado financeiro na Saga. A confirmacao fica
-visivel na OS, mas a liberacao do reparo ainda e uma etapa posterior.
+visivel na OS e permite solicitar a autorizacao de Execucao.
+
+O [guia de liberacao de Execucao](docs/integracao/06-liberacao-execucao.md)
+mostra a proxima etapa: a Saga envia LiberarExecucao apos pagamento confirmado
+e aguarda a resposta antes de colocar a OS em AguardandoExecucao. Isso nao
+inicia o reparo nem reserva ou consome pecas.
 
 ## Clean Architecture
 
@@ -182,7 +187,8 @@ Misturar as alternativas retorna HTTP 400. CPF/CNPJ ou placa duplicados retornam
 
 O login e os healthchecks sao publicos. As operacoes de cadastro e OS exigem JWT
 administrativo. `ordenacao` aceita `maisAntigo` ou `maisNovo`. A prioridade de
-status e EmExecucao, PagamentoConfirmado, AguardandoPagamento, AguardandoAprovacao, EmDiagnostico e Recebida. Finalizadas,
+status e EmExecucao, AguardandoExecucao, PagamentoConfirmado, AguardandoPagamento,
+AguardandoAprovacao, EmDiagnostico e Recebida. Finalizadas,
 entregues e canceladas ficam fora da listagem operacional; a consulta por ID
 preserva o acesso ao historico.
 
@@ -234,7 +240,7 @@ No futuro deploy, a aplicacao das migrations sera uma etapa controlada da entreg
 
 ## Proximos incrementos
 
-- Proximas etapas da Saga: liberacao e finalizacao do reparo, com suas compensacoes.
+- Reserva de pecas, inicio e finalizacao do reparo, com suas compensacoes.
 - Reconciliacao, nova tentativa de negocio e compensacoes financeiras.
 - Autenticacao por CPF e autorizacao por cliente.
 - Terraform, Kubernetes, Kong e CD independente para a Fase 4.

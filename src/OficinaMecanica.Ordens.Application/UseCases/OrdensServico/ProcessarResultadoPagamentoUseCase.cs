@@ -27,8 +27,32 @@ public class ProcessarResultadoPagamentoUseCase
                 : string.IsNullOrWhiteSpace(dados.Motivo) || dados.Codigo != (falhaTecnica ? "ResultadoNaoConfirmado" : "PagamentoRecusado")))
             throw new ValidacaoException("Resultado nao corresponde ao pagamento esperado.");
         if (_sagas.FoiProcessada(mensagem.MessageId)) return;
-        saga.RegistrarResultadoPagamento(dados.PagamentoId.Value, dados.ProvedorId, confirmado, mensagem.OccurredAt, dados.Motivo);
-        _sagas.Salvar(saga, mensagem.MessageId, null,
-            novoStatus: confirmado ? StatusOrdemServico.PagamentoConfirmado : null, registradoEm: mensagem.OccurredAt);
+        var alterada = saga.RegistrarResultadoPagamento(dados.PagamentoId.Value, dados.ProvedorId, confirmado, mensagem.OccurredAt, dados.Motivo);
+        MensagemIntegracao? comando = null;
+        if (confirmado && alterada)
+        {
+            saga.SolicitarLiberacaoExecucao(mensagem.MessageId);
+            comando = new MensagemIntegracao
+            {
+                MessageId = saga.PedidoLiberacaoExecucaoId!.Value,
+                Type = "LiberarExecucao",
+                SagaId = saga.Id,
+                CausationId = mensagem.MessageId,
+                CorrelationId = saga.CorrelationId,
+                OccurredAt = DateTime.UtcNow,
+                Payload = new DadosMensagem
+                {
+                    OrdemServicoId = saga.OrdemServicoId,
+                    ExecucaoId = saga.ExecucaoId,
+                    OrcamentoId = saga.OrcamentoId,
+                    PagamentoId = saga.PagamentoId,
+                    ProvedorId = saga.PagamentoProvedorId,
+                    ValorTotal = saga.ValorOrcamento,
+                    Moeda = "BRL"
+                }
+            };
+        }
+        _sagas.Salvar(saga, mensagem.MessageId, comando,
+            novoStatus: confirmado && alterada ? StatusOrdemServico.PagamentoConfirmado : null, registradoEm: mensagem.OccurredAt);
     }
 }
