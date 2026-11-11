@@ -16,6 +16,7 @@ public class SagaAberturaOutput
     public DateTime? PagamentoConfirmadoEm { get; set; }
     public DateTime? ExecucaoLiberadaEm { get; set; }
     public DateTime? ReparoIniciadoEm { get; set; }
+    public DateTime? ReparoConcluidoEm { get; set; }
     public DateTime? DiagnosticoIniciadoEm { get; set; }
     public DateTime? DiagnosticoConcluidoEm { get; set; }
     public StatusSagaAbertura Status { get; set; }

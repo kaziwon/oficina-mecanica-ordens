@@ -58,7 +58,7 @@ public class InicioReparoTests
         Assert.Equal(2, db.Inbox.Count()); Assert.Equal(StatusOrdemServico.AguardandoExecucao, db.OrdensServico.Single().Status);
     }
 
-    private static MensagemIntegracao Inicio(MensagemIntegracao liberacao)
+    internal static MensagemIntegracao Inicio(MensagemIntegracao liberacao)
     {
         var agora = DateTime.UtcNow.AddMilliseconds(1);
         return new MensagemIntegracao

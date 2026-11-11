@@ -18,4 +18,5 @@ public class DadosMensagem
     public string? ProvedorId { get; set; }
     public string? Moeda { get; set; }
     public DateTime? ReparoIniciadoEm { get; set; }
+    public DateTime? ReparoConcluidoEm { get; set; }
 }

@@ -51,6 +51,11 @@ reserva transacional das pecas e o inicio explicito em Execucao. O evento
 ReparoIniciado atualiza a Saga e a OS para EmExecucao. Falta de estoque
 mantem a OS na fila, sem reserva parcial nem nova cobranca.
 
+O [guia de conclusao do reparo](docs/integracao/08-conclusao-reparo.md) fecha
+o trecho de execucao: o comando administrativo consome as reservas em Execucao
+e ReparoConcluido finaliza a Saga e a OS, sem marcar entrega. Historico e
+consulta por ID permanecem disponiveis; finalizadas saem da lista operacional.
+
 ## Clean Architecture
 
 ```text
@@ -246,7 +251,7 @@ No futuro deploy, a aplicacao das migrations sera uma etapa controlada da entreg
 
 ## Proximos incrementos
 
-- Conclusao do reparo, consumo de pecas reservadas e compensacoes dessas reservas.
+- Entrega do veiculo e compensacoes das reservas, com regras explicitas.
 - Reconciliacao, nova tentativa de negocio e compensacoes financeiras.
 - Autenticacao por CPF e autorizacao por cliente.
 - Terraform, Kubernetes, Kong e CD independente para a Fase 4.

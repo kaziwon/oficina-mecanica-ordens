@@ -19,6 +19,7 @@ public static class SagaAberturaOutputMapper
         PagamentoConfirmadoEm = saga.PagamentoConfirmadoEm,
         ExecucaoLiberadaEm = saga.ExecucaoLiberadaEm,
         ReparoIniciadoEm = saga.ReparoIniciadoEm,
+        ReparoConcluidoEm = saga.ReparoConcluidoEm,
         DiagnosticoIniciadoEm = saga.DiagnosticoIniciadoEm,
         DiagnosticoConcluidoEm = saga.DiagnosticoConcluidoEm,
         Status = saga.Status,

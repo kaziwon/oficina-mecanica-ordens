@@ -35,6 +35,8 @@ public class EfSagaAberturaDataSource : ISagaAberturaDataSource
                 ordem.AguardarExecucao(registradoEm!.Value);
             else if (novoStatus == StatusOrdemServico.EmExecucao)
                 ordem.IniciarReparo(registradoEm!.Value);
+            else if (novoStatus == StatusOrdemServico.Finalizada)
+                ordem.ConcluirReparo(registradoEm!.Value);
             else throw new InvalidOperationException("Transicao de integracao desconhecida.");
         }
         if (cancelarOrdem)

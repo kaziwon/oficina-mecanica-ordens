@@ -13,12 +13,13 @@ public class IntegracaoCleanController
     private readonly ProcessarResultadoPagamentoUseCase _pagamento;
     private readonly ProcessarRespostaLiberacaoUseCase _liberacao;
     private readonly ProcessarReparoIniciadoUseCase _reparo;
+    private readonly ProcessarReparoConcluidoUseCase _conclusaoReparo;
     public IntegracaoCleanController(ProcessarRespostaAberturaUseCase processar,
         ProcessarEventoDiagnosticoUseCase diagnostico, ProcessarRespostaOrcamentoUseCase orcamento,
         ProcessarDecisaoOrcamentoUseCase decisao, ProcessarCancelamentoPorRecusaUseCase cancelamento,
         ProcessarResultadoPagamentoUseCase pagamento, ProcessarRespostaLiberacaoUseCase liberacao,
-        ProcessarReparoIniciadoUseCase reparo)
-    { _processar = processar; _diagnostico = diagnostico; _orcamento = orcamento; _decisao = decisao; _cancelamento = cancelamento; _pagamento = pagamento; _liberacao = liberacao; _reparo = reparo; }
+        ProcessarReparoIniciadoUseCase reparo, ProcessarReparoConcluidoUseCase conclusaoReparo)
+    { _processar = processar; _diagnostico = diagnostico; _orcamento = orcamento; _decisao = decisao; _cancelamento = cancelamento; _pagamento = pagamento; _liberacao = liberacao; _reparo = reparo; _conclusaoReparo = conclusaoReparo; }
     public void Processar(MensagemIntegracao mensagem)
     {
         if (mensagem.Type is "DiagnosticoIniciado" or "DiagnosticoConcluido") _diagnostico.Executar(mensagem);
@@ -28,6 +29,7 @@ public class IntegracaoCleanController
         else if (mensagem.Type is "PagamentoConfirmado" or "PagamentoRecusado" or "FalhaProcessamentoPagamento") _pagamento.Executar(mensagem);
         else if (mensagem.Type is "ExecucaoLiberada" or "LiberacaoExecucaoRecusada") _liberacao.Executar(mensagem);
         else if (mensagem.Type == "ReparoIniciado") _reparo.Executar(mensagem);
+        else if (mensagem.Type == "ReparoConcluido") _conclusaoReparo.Executar(mensagem);
         else _processar.Executar(mensagem);
     }
 }
