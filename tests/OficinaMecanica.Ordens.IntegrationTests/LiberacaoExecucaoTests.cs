@@ -104,7 +104,7 @@ public class LiberacaoExecucaoTests
         Assert.Throws<InvalidOperationException>(() => Processar(factory, resposta));
     }
 
-    private static async Task<OrdensApiFactory> Criar()
+    internal static async Task<OrdensApiFactory> Criar()
     {
         var factory = new OrdensApiFactory(); using var client = factory.CreateClient(); await ApiTestHelper.Autenticar(client);
         (await client.PostAsJsonAsync("/api/ordensservico", ApiTestHelper.OrdemCompleta())).EnsureSuccessStatusCode();
@@ -138,7 +138,7 @@ public class LiberacaoExecucaoTests
         return factory;
     }
 
-    private static MensagemIntegracao Resposta(OrdensApiFactory factory, bool aceita)
+    internal static MensagemIntegracao Resposta(OrdensApiFactory factory, bool aceita)
     {
         using var scope = factory.Services.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<AppDbContext>(); var saga = db.SagasAbertura.AsNoTracking().Single();
         var comando = MensagemSerializer.Desserializar(db.Outbox.Single(item => item.Id == saga.PedidoLiberacaoExecucaoId).Body);
@@ -166,6 +166,6 @@ public class LiberacaoExecucaoTests
         };
     }
 
-    private static void Processar(OrdensApiFactory factory, MensagemIntegracao mensagem)
+    internal static void Processar(OrdensApiFactory factory, MensagemIntegracao mensagem)
     { using var scope = factory.Services.CreateScope(); scope.ServiceProvider.GetRequiredService<IntegracaoCleanController>().Processar(mensagem); }
 }

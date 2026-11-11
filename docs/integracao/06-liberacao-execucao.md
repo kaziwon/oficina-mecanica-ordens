@@ -111,8 +111,9 @@ atualizados para aceitar o novo estado final.
 ## Limites deste incremento
 
 Nao inicia o reparo, nao reserva nem consome pecas e nao finaliza a OS.
-Nao altera o servico de Cobranca nem realiza estorno. A continuidade sera
-reserva de estoque, inicio/conclusao do reparo e suas compensacoes.
+Nao altera o servico de Cobranca nem realiza estorno. O incremento seguinte
+de [inicio do reparo](07-inicio-reparo.md) ja implementa a reserva e o inicio
+explicito. Conclusao e compensacoes continuam pendentes.
 
 Sagas historicas que ja estavam PagamentoConfirmado antes desta versao nao
 recebem liberacao retroativa. A migration apenas adiciona os campos de

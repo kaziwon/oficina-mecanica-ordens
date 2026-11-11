@@ -23,6 +23,7 @@ public class SagaAbertura
     public Guid? EventoPagamentoConfirmadoId { get; set; }
     public Guid? PedidoLiberacaoExecucaoId { get; set; }
     public DateTime? ExecucaoLiberadaEm { get; set; }
+    public DateTime? ReparoIniciadoEm { get; set; }
     public DateTime? DiagnosticoIniciadoEm { get; set; }
     public DateTime? DiagnosticoConcluidoEm { get; set; }
     public StatusSagaAbertura Status { get; set; }
@@ -206,12 +207,28 @@ public class SagaAbertura
 
     public bool RegistrarRespostaLiberacao(bool aceita, DateTime ocorridoEm, string? motivo)
     {
-        if (Status == StatusSagaAbertura.ExecucaoLiberada && aceita) return false;
+        if (ExecucaoLiberadaEm.HasValue && aceita) return false;
         if (Status != StatusSagaAbertura.LiberacaoExecucaoPendente)
             throw new InvalidOperationException("A Saga nao aguarda esta resposta de liberacao.");
         Status = aceita ? StatusSagaAbertura.ExecucaoLiberada : StatusSagaAbertura.FalhaRequerIntervencao;
         if (aceita) ExecucaoLiberadaEm = ocorridoEm;
         else Motivo = motivo;
+        Alterada();
+        return true;
+    }
+
+    public bool RegistrarInicioReparo(DateTime iniciadoEm)
+    {
+        if (ReparoIniciadoEm.HasValue)
+        {
+            if (ReparoIniciadoEm.Value == iniciadoEm) return false;
+            throw new InvalidOperationException("O inicio do reparo ja foi registrado com outra data.");
+        }
+        if (Status != StatusSagaAbertura.ExecucaoLiberada || !ExecucaoLiberadaEm.HasValue
+            || !PagamentoConfirmadoEm.HasValue || iniciadoEm < ExecucaoLiberadaEm.Value)
+            throw new InvalidOperationException("A Saga nao possui liberacao confirmada para iniciar o reparo.");
+        ReparoIniciadoEm = iniciadoEm;
+        Status = StatusSagaAbertura.EmExecucao;
         Alterada();
         return true;
     }

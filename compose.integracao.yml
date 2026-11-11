@@ -77,8 +77,19 @@ services:
       timeout: 5s
       retries: 30
 
+  mongo-keyfile:
+    image: mongo:8.0
+    user: "0:0"
+    entrypoint: ["/bin/bash", "/scripts/mongo-keyfile.sh"]
+    volumes:
+      - mongo_keys:/keys
+      - ${EXECUCAO_PATH:-../oficina-mecanica-execucao}/infra/local/mongo-keyfile.sh:/scripts/mongo-keyfile.sh:ro
+
   mongo:
     image: mongo:8.0
+    command: ["--replSet", "rs0", "--bind_ip_all", "--keyFile", "/keys/mongo-keyfile"]
+    depends_on:
+      mongo-keyfile: { condition: service_completed_successfully }
     environment:
       MONGO_INITDB_ROOT_USERNAME: execucao_root
       MONGO_INITDB_ROOT_PASSWORD: LocalMongoSaga123
@@ -89,12 +100,25 @@ services:
     ports: ["127.0.0.1:27019:27017"]
     volumes:
       - execucao_integracao:/data/db
+      - mongo_keys:/keys:ro
       - ${EXECUCAO_PATH:-../oficina-mecanica-execucao}/infra/local/mongo-init.js:/docker-entrypoint-initdb.d/01-execucao.js:ro
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet -u $$MONGO_INITDB_ROOT_USERNAME -p $$MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin --eval 'db.adminCommand({ping:1}).ok'"]
       interval: 5s
       timeout: 5s
       retries: 30
+
+  mongo-replica-init:
+    image: mongo:8.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: execucao_root
+      MONGO_INITDB_ROOT_PASSWORD: LocalMongoSaga123
+    entrypoint: ["/bin/bash", "-c"]
+    command: ['exec mongosh --quiet --host mongo --username "$$MONGO_INITDB_ROOT_USERNAME" --password "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin /scripts/mongo-replica-init.js']
+    volumes:
+      - ${EXECUCAO_PATH:-../oficina-mecanica-execucao}/infra/local/mongo-replica-init.js:/scripts/mongo-replica-init.js:ro
+    depends_on:
+      mongo: { condition: service_healthy }
 
   filas-permissoes:
     image: softwaremill/elasticmq:1.7.1
@@ -133,7 +157,7 @@ services:
       context: ${EXECUCAO_PATH:-../oficina-mecanica-execucao}
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      MongoSettings__ConnectionString: mongodb://execucao_app:LocalExecucaoSaga123@mongo:27017/execucao?authSource=execucao
+      MongoSettings__ConnectionString: mongodb://execucao_app:LocalExecucaoSaga123@mongo:27017/execucao?authSource=execucao&replicaSet=rs0&directConnection=true
       MongoSettings__DatabaseName: execucao
       JwtSettings__SecretKey: chave-local-da-integracao-fase4-1234567890
       AdminUserSettings__Username: admin
@@ -142,10 +166,11 @@ services:
       Messaging__Endpoint: http://elasticmq:9324
     ports: ["127.0.0.1:18092:8080"]
     depends_on:
-      mongo: { condition: service_healthy }
+      mongo-replica-init: { condition: service_completed_successfully }
       elasticmq: { condition: service_started }
 
 volumes:
+  mongo_keys:
   pagamento_mock:
   cobranca_integracao:
   ordens_integracao:

@@ -19,7 +19,8 @@ As OS novas ficam em `Recebida`. A abertura agora grava tambem a Saga e o
 pedido de entrada em Execucao na mesma transacao. O worker publica esse pedido
 quando habilitado. Este servico nao possui tabelas de estoque, orcamentos ou
 pagamentos. Diagnostico, orcamento, pagamento mock e autorizacao da fila de
-execucao ja estao conectados por mensagens. O reparo nao comeca automaticamente.
+execucao ja estao conectados por mensagens. O reparo nao comeca automaticamente:
+o comando administrativo em Execucao reserva as pecas e publica ReparoIniciado.
 
 ## Primeiro contrato de integracao
 
@@ -44,6 +45,11 @@ O [guia de liberacao de Execucao](docs/integracao/06-liberacao-execucao.md)
 mostra a proxima etapa: a Saga envia LiberarExecucao apos pagamento confirmado
 e aguarda a resposta antes de colocar a OS em AguardandoExecucao. Isso nao
 inicia o reparo nem reserva ou consome pecas.
+
+O [guia de inicio do reparo](docs/integracao/07-inicio-reparo.md) adiciona a
+reserva transacional das pecas e o inicio explicito em Execucao. O evento
+ReparoIniciado atualiza a Saga e a OS para EmExecucao. Falta de estoque
+mantem a OS na fila, sem reserva parcial nem nova cobranca.
 
 ## Clean Architecture
 
@@ -240,7 +246,7 @@ No futuro deploy, a aplicacao das migrations sera uma etapa controlada da entreg
 
 ## Proximos incrementos
 
-- Reserva de pecas, inicio e finalizacao do reparo, com suas compensacoes.
+- Conclusao do reparo, consumo de pecas reservadas e compensacoes dessas reservas.
 - Reconciliacao, nova tentativa de negocio e compensacoes financeiras.
 - Autenticacao por CPF e autorizacao por cliente.
 - Terraform, Kubernetes, Kong e CD independente para a Fase 4.

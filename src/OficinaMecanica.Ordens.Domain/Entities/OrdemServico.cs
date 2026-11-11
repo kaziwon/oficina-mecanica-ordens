@@ -47,6 +47,14 @@ public class OrdemServico
         RegistrarStatus(StatusOrdemServico.AguardandoExecucao, liberadaEm);
     }
 
+    public void IniciarReparo(DateTime iniciadoEm)
+    {
+        if (Status == StatusOrdemServico.EmExecucao) return;
+        if (Status != StatusOrdemServico.AguardandoExecucao)
+            throw new InvalidOperationException("A OS nao aguarda inicio de execucao.");
+        RegistrarStatus(StatusOrdemServico.EmExecucao, iniciadoEm);
+    }
+
     public void CancelarPorRecusaOrcamento(DateTime registradoEm)
     {
         if (Status == StatusOrdemServico.Cancelada) return;

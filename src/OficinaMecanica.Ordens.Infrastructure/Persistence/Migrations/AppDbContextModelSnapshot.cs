@@ -198,6 +198,9 @@ namespace OficinaMecanica.Ordens.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("PedidoRegistroId")
                         .HasColumnType("char(36)");
 
+                    b.Property<DateTime?>("ReparoIniciadoEm")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(40)
