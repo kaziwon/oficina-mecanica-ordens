@@ -24,7 +24,8 @@ public static class MensagemValidator
             || mensagem.Payload.Moeda?.Length > 3)
             throw new ValidacaoException("Identificacao de pagamento invalida.");
         if ((mensagem.Payload.PagamentoId.HasValue || mensagem.Payload.ProvedorId is not null || mensagem.Payload.Moeda is not null)
-            && mensagem.Type is not ("SolicitarPagamento" or "PagamentoConfirmado" or "PagamentoRecusado" or "FalhaProcessamentoPagamento"))
+            && mensagem.Type is not ("SolicitarPagamento" or "PagamentoConfirmado" or "PagamentoRecusado" or "FalhaProcessamentoPagamento"
+                or "LiberarExecucao" or "ExecucaoLiberada" or "LiberacaoExecucaoRecusada"))
             throw new ValidacaoException("O tipo de mensagem nao admite dados de pagamento.");
         if (mensagem.Payload.OrcamentoCriadoEm.HasValue
             && mensagem.Type is not ("OrcamentoAprovado" or "OrcamentoRecusado"))

@@ -31,6 +31,8 @@ public class EfSagaAberturaDataSource : ISagaAberturaDataSource
                 ordem.CancelarPorRecusaOrcamento(registradoEm!.Value);
             else if (novoStatus == StatusOrdemServico.PagamentoConfirmado)
                 ordem.ConfirmarPagamento(registradoEm!.Value);
+            else if (novoStatus == StatusOrdemServico.AguardandoExecucao)
+                ordem.AguardarExecucao(registradoEm!.Value);
             else throw new InvalidOperationException("Transicao de integracao desconhecida.");
         }
         if (cancelarOrdem)

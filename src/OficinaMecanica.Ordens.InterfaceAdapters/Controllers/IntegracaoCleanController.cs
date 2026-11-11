@@ -11,11 +11,12 @@ public class IntegracaoCleanController
     private readonly ProcessarDecisaoOrcamentoUseCase _decisao;
     private readonly ProcessarCancelamentoPorRecusaUseCase _cancelamento;
     private readonly ProcessarResultadoPagamentoUseCase _pagamento;
+    private readonly ProcessarRespostaLiberacaoUseCase _liberacao;
     public IntegracaoCleanController(ProcessarRespostaAberturaUseCase processar,
         ProcessarEventoDiagnosticoUseCase diagnostico, ProcessarRespostaOrcamentoUseCase orcamento,
         ProcessarDecisaoOrcamentoUseCase decisao, ProcessarCancelamentoPorRecusaUseCase cancelamento,
-        ProcessarResultadoPagamentoUseCase pagamento)
-    { _processar = processar; _diagnostico = diagnostico; _orcamento = orcamento; _decisao = decisao; _cancelamento = cancelamento; _pagamento = pagamento; }
+        ProcessarResultadoPagamentoUseCase pagamento, ProcessarRespostaLiberacaoUseCase liberacao)
+    { _processar = processar; _diagnostico = diagnostico; _orcamento = orcamento; _decisao = decisao; _cancelamento = cancelamento; _pagamento = pagamento; _liberacao = liberacao; }
     public void Processar(MensagemIntegracao mensagem)
     {
         if (mensagem.Type is "DiagnosticoIniciado" or "DiagnosticoConcluido") _diagnostico.Executar(mensagem);
@@ -23,6 +24,7 @@ public class IntegracaoCleanController
         else if (mensagem.Type is "OrcamentoAprovado" or "OrcamentoRecusado") _decisao.Executar(mensagem);
         else if (mensagem.Type is "ExecucaoCanceladaPorRecusaOrcamento" or "CancelamentoPorRecusaOrcamentoRecusado") _cancelamento.Executar(mensagem);
         else if (mensagem.Type is "PagamentoConfirmado" or "PagamentoRecusado" or "FalhaProcessamentoPagamento") _pagamento.Executar(mensagem);
+        else if (mensagem.Type is "ExecucaoLiberada" or "LiberacaoExecucaoRecusada") _liberacao.Executar(mensagem);
         else _processar.Executar(mensagem);
     }
 }

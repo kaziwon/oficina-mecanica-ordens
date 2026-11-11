@@ -64,12 +64,13 @@ de pendencia continua disponivel, mas nao permite marcar um pagamento como pago.
   em AguardandoPagamento, sem liberar reparos. Reconciliacao, nova tentativa de
   negocio e compensacoes financeiras ainda precisam de fluxo proprio.
 
-Pagamento confirmado deixa Saga e OS em PagamentoConfirmado (novo valor 9 da
-OS, sem renumerar os anteriores). Execucao ainda fica AguardandoLiberacao:
-autorizar a fila de reparo sera o proximo incremento. A listagem prioriza
-EmExecucao, PagamentoConfirmado, AguardandoPagamento, AguardandoAprovacao,
-EmDiagnostico e Recebida. A API de pagamento mostra provedorId, tentativas,
-codigoFalha e finalizadoEm. A Saga mostra o ID e a confirmacao do pagamento.
+Pagamento confirmado registra PagamentoConfirmado na OS (valor 9, sem
+renumerar os anteriores). A etapa seguinte ja esta implementada no
+[guia de liberacao](06-liberacao-execucao.md): a Saga fica
+LiberacaoExecucaoPendente ate Execucao responder. A resposta aceita coloca
+a OS em AguardandoExecucao, sem iniciar o reparo. A API de pagamento mostra
+provedorId, tentativas, codigoFalha e finalizadoEm. A Saga mostra o ID e a
+confirmacao do pagamento, alem da data de liberacao quando confirmada.
 
 ## Mensagens v1
 
@@ -99,7 +100,8 @@ explicitas do Compose sao ficticias e somente de desenvolvimento.
 
 O script abre uma OS, conclui diagnostico, gera/aprova orcamento e aguarda o
 resultado financeiro. Depois consulta o mock e repete a chamada com a mesma
-chave para comprovar o mesmo ID, sem liberar Execucao.
+chave para comprovar o mesmo ID, sem iniciar o reparo. No modo approved,
+o roteiro aguarda tambem a confirmacao da liberacao da fila de Execucao.
 
 Para recusar somente novas transacoes:
 
@@ -129,11 +131,13 @@ agora aceita que o pagamento automatico avance antes da consulta.
 ### Postman
 
 1. Gere e aprove um orcamento seguindo os guias anteriores.
-2. Consulte a Saga em Ordens ate PagamentoConfirmado ou FalhaRequerIntervencao.
+2. Consulte a Saga em Ordens ate ExecucaoLiberada ou FalhaRequerIntervencao.
 3. Com o JWT administrativo de Cobranca, consulte GET /api/orcamentos/ID para
    obter pagamentoId, depois GET /api/pagamentos/ID_DO_PAGAMENTO.
-4. Confira que Execucao continua AguardandoLiberacao e que os IDs financeiros
-   e valores coincidem com a Saga e com o orcamento.
+4. No sucesso, confira Execucao e OS em AguardandoExecucao, sem reparo iniciado.
+   Se o pagamento foi recusado ou inconclusivo, Execucao continua
+   AguardandoLiberacao. Os IDs financeiros e valores devem coincidir com a
+   Saga e com o orcamento.
 
 ## Configuracao e limites
 
@@ -145,6 +149,6 @@ runner. O teste de envio/reentrega usa ElasticMQ, como nos incrementos anteriore
 As migrations aplicam-se automaticamente no Compose. Aprovacoes historicas e
 pendencias manuais nao vinculadas nao sao cobradas retroativamente: somente
 novos comandos validos da Saga entram no worker. Nao existem ainda webhook de
-pagamento real, estorno, reconciliacao operacional, liberacao de reparo ou BDD
+pagamento real, estorno, reconciliacao operacional, inicio do reparo ou BDD
 do fluxo completo. Infraestrutura AWS e observabilidade distribuida ficam para
 as etapas posteriores. Nada deste roteiro cria recursos na AWS.

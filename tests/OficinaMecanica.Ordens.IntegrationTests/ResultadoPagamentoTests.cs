@@ -17,18 +17,26 @@ public class ResultadoPagamentoTests
     [InlineData("PagamentoConfirmado")]
     [InlineData("PagamentoRecusado")]
     [InlineData("FalhaProcessamentoPagamento")]
-    public async Task Resultado_AtualizaSagaEHistoricoUmaVezSemLiberarReparo(string tipo)
+    public async Task Resultado_SolicitaLiberacaoSomenteSePagamentoConfirmado(string tipo)
     {
         using var factory = await Criar(); var resultado = Resultado(factory, tipo);
         Processar(factory, resultado); Processar(factory, resultado);
         using var scope = factory.Services.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var confirmado = tipo == "PagamentoConfirmado"; var saga = db.SagasAbertura.Single();
-        Assert.Equal(confirmado ? StatusSagaAbertura.PagamentoConfirmado : StatusSagaAbertura.FalhaRequerIntervencao, saga.Status);
+        Assert.Equal(confirmado ? StatusSagaAbertura.LiberacaoExecucaoPendente : StatusSagaAbertura.FalhaRequerIntervencao, saga.Status);
         Assert.Equal(resultado.Payload.PagamentoId, saga.PagamentoId);
         Assert.Equal(confirmado ? StatusOrdemServico.PagamentoConfirmado : StatusOrdemServico.AguardandoPagamento, db.OrdensServico.Single().Status);
         Assert.Equal(confirmado ? 5 : 4, db.HistoricoStatus.Count()); Assert.Equal(2, db.Inbox.Count());
-        Assert.Equal(2, db.Outbox.Count());
-        Assert.DoesNotContain(db.Outbox.AsEnumerable().Select(item => MensagemSerializer.Desserializar(item.Body)), item => item.Type.Contains("Liberar", StringComparison.Ordinal));
+        Assert.Equal(confirmado ? 3 : 2, db.Outbox.Count());
+        var liberacoes = db.Outbox.AsEnumerable().Select(item => MensagemSerializer.Desserializar(item.Body)).Where(item => item.Type == "LiberarExecucao").ToList();
+        if (confirmado)
+        {
+            var comando = Assert.Single(liberacoes);
+            Assert.Equal(resultado.MessageId, comando.CausationId);
+            Assert.Equal(saga.PedidoLiberacaoExecucaoId, comando.MessageId);
+            Assert.Equal(saga.PagamentoId, comando.Payload.PagamentoId);
+        }
+        else Assert.Empty(liberacoes);
     }
 
     [Theory]
@@ -58,7 +66,7 @@ public class ResultadoPagamentoTests
         resultado.Payload.Codigo = "PagamentoRecusado"; resultado.Payload.Motivo = "Resposta contraditoria";
         Assert.Throws<InvalidOperationException>(() => Processar(factory, resultado));
         using var scope = factory.Services.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        Assert.Equal(StatusSagaAbertura.PagamentoConfirmado, db.SagasAbertura.Single().Status); Assert.Equal(2, db.Inbox.Count());
+        Assert.Equal(StatusSagaAbertura.LiberacaoExecucaoPendente, db.SagasAbertura.Single().Status); Assert.Equal(2, db.Inbox.Count());
     }
 
     [Fact]

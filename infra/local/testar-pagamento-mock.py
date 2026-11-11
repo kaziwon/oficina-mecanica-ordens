@@ -18,7 +18,7 @@ def main():
     ordem, inicial = preparar_orcamento(ordens_token, execucao_token, servico["id"])
     for _ in range(2):
         chamar(COBRANCA, f"/api/orcamentos/{inicial['orcamentoId']}/aprovar", cobranca_token, metodo="POST")
-    estado = "PagamentoConfirmado" if modo == "approved" else "FalhaRequerIntervencao"
+    estado = "ExecucaoLiberada" if modo == "approved" else "FalhaRequerIntervencao"
     saga = aguardar_saga(ordens_token, ordem["id"], estado)
     orcamento = chamar(COBRANCA, f"/api/orcamentos/{inicial['orcamentoId']}", cobranca_token)
     assert saga["pagamentoId"] == orcamento["pagamentoId"] and saga["pagamentoId"]
@@ -27,8 +27,9 @@ def main():
     assert pagamento["status"] == esperado and pagamento["valor"] == 100 and pagamento["moeda"] == "BRL"
     assert pagamento["tentativas"] >= 1
     status_os = chamar(ORDENS, f"/api/ordensservico/{ordem['id']}", ordens_token)["status"]
-    assert status_os == ("PagamentoConfirmado" if modo == "approved" else "AguardandoPagamento")
-    assert chamar(EXECUCAO, f"/api/execucoes/{inicial['execucaoId']}", execucao_token)["status"] == "AguardandoLiberacao"
+    assert status_os == ("AguardandoExecucao" if modo == "approved" else "AguardandoPagamento")
+    status_execucao = chamar(EXECUCAO, f"/api/execucoes/{inicial['execucaoId']}", execucao_token)["status"]
+    assert status_execucao == ("AguardandoExecucao" if modo == "approved" else "AguardandoLiberacao")
     mock_url = os.getenv("PAGAMENTO_MOCK_URL", "http://localhost:18094").rstrip("/")
     token = chamar(mock_url, "/oauth/token", body={"grant_type": "client_credentials",
                    "client_id": os.getenv("PAGAMENTO_MOCK_CLIENT_ID", "oficina-local"),
@@ -45,7 +46,7 @@ def main():
         assert registro["id"] == repetida["id"] == pagamento["provedorId"] == saga["pagamentoProvedorId"]
         assert registro["status"] == repetida["status"] == modo
         print(f"OK: token obtido e transacao {registro['id']} repetida sem segunda cobranca")
-    print(f"OK: OS {ordem['id']}, pagamento {pagamento['id']} em {pagamento['status']}; reparo segue bloqueado")
+    print(f"OK: OS {ordem['id']}, pagamento {pagamento['id']} em {pagamento['status']}; execucao em {status_execucao}")
 
 
 if __name__ == "__main__":
