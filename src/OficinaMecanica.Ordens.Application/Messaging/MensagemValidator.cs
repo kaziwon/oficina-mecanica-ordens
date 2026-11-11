@@ -25,11 +25,14 @@ public static class MensagemValidator
             throw new ValidacaoException("Identificacao de pagamento invalida.");
         if ((mensagem.Payload.PagamentoId.HasValue || mensagem.Payload.ProvedorId is not null || mensagem.Payload.Moeda is not null)
             && mensagem.Type is not ("SolicitarPagamento" or "PagamentoConfirmado" or "PagamentoRecusado" or "FalhaProcessamentoPagamento"
-                or "LiberarExecucao" or "ExecucaoLiberada" or "LiberacaoExecucaoRecusada" or "ReparoIniciado"))
+                or "LiberarExecucao" or "ExecucaoLiberada" or "LiberacaoExecucaoRecusada" or "ReparoIniciado" or "ReparoConcluido"))
             throw new ValidacaoException("O tipo de mensagem nao admite dados de pagamento.");
         if (mensagem.Payload.ReparoIniciadoEm.HasValue
-            && (mensagem.Type != "ReparoIniciado" || mensagem.Payload.ReparoIniciadoEm.Value.Kind != DateTimeKind.Utc))
+            && (mensagem.Type is not ("ReparoIniciado" or "ReparoConcluido") || mensagem.Payload.ReparoIniciadoEm.Value.Kind != DateTimeKind.Utc))
             throw new ValidacaoException("O tipo de mensagem nao admite a data de inicio de reparo informada.");
+        if (mensagem.Payload.ReparoConcluidoEm.HasValue
+            && (mensagem.Type != "ReparoConcluido" || mensagem.Payload.ReparoConcluidoEm.Value.Kind != DateTimeKind.Utc))
+            throw new ValidacaoException("O tipo de mensagem nao admite a data de conclusao de reparo informada.");
         if (mensagem.Payload.OrcamentoCriadoEm.HasValue
             && mensagem.Type is not ("OrcamentoAprovado" or "OrcamentoRecusado"))
             throw new ValidacaoException("O tipo de mensagem nao admite a data de criacao do orcamento.");

@@ -55,6 +55,14 @@ public class OrdemServico
         RegistrarStatus(StatusOrdemServico.EmExecucao, iniciadoEm);
     }
 
+    public void ConcluirReparo(DateTime concluidoEm)
+    {
+        if (Status == StatusOrdemServico.Finalizada) return;
+        if (Status != StatusOrdemServico.EmExecucao)
+            throw new InvalidOperationException("A OS nao esta em execucao para conclusao.");
+        RegistrarStatus(StatusOrdemServico.Finalizada, concluidoEm);
+    }
+
     public void CancelarPorRecusaOrcamento(DateTime registradoEm)
     {
         if (Status == StatusOrdemServico.Cancelada) return;

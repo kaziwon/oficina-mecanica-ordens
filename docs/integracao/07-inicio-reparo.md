@@ -110,5 +110,6 @@ No Postman, depois de chegar a ExecucaoLiberada, chame o novo POST sem body
 com o token de Execucao. Consulte execucao e pecas; em Ordens, consulte OS e
 saga-abertura ate EmExecucao. A atualizacao entre servicos e assincrona.
 
-Finalizacao do reparo, consumo das reservas, compensacoes, BDD completo,
-cobertura minima obrigatoria e Sonar continuam nas proximas etapas.
+A [conclusao do reparo e consumo das reservas](08-conclusao-reparo.md) ja
+esta implementada no incremento seguinte. Entrega do veiculo, compensacoes,
+BDD completo, cobertura minima obrigatoria e Sonar continuam nas proximas etapas.

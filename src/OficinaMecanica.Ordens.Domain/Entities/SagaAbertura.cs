@@ -24,6 +24,7 @@ public class SagaAbertura
     public Guid? PedidoLiberacaoExecucaoId { get; set; }
     public DateTime? ExecucaoLiberadaEm { get; set; }
     public DateTime? ReparoIniciadoEm { get; set; }
+    public DateTime? ReparoConcluidoEm { get; set; }
     public DateTime? DiagnosticoIniciadoEm { get; set; }
     public DateTime? DiagnosticoConcluidoEm { get; set; }
     public StatusSagaAbertura Status { get; set; }
@@ -229,6 +230,22 @@ public class SagaAbertura
             throw new InvalidOperationException("A Saga nao possui liberacao confirmada para iniciar o reparo.");
         ReparoIniciadoEm = iniciadoEm;
         Status = StatusSagaAbertura.EmExecucao;
+        Alterada();
+        return true;
+    }
+
+    public bool RegistrarConclusaoReparo(DateTime iniciadoEm, DateTime concluidoEm)
+    {
+        if (ReparoConcluidoEm.HasValue)
+        {
+            if (ReparoIniciadoEm == iniciadoEm && ReparoConcluidoEm == concluidoEm) return false;
+            throw new InvalidOperationException("A conclusao do reparo ja foi registrada com outras datas.");
+        }
+        if (Status != StatusSagaAbertura.EmExecucao || !ReparoIniciadoEm.HasValue
+            || ReparoIniciadoEm != iniciadoEm || concluidoEm < iniciadoEm)
+            throw new InvalidOperationException("A Saga nao possui inicio confirmado para esta conclusao.");
+        ReparoConcluidoEm = concluidoEm;
+        Status = StatusSagaAbertura.Finalizada;
         Alterada();
         return true;
     }
