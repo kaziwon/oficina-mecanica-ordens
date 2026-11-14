@@ -27,8 +27,6 @@ jobs:
        github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: [self-hosted, macOS, sonar-local]
     timeout-minutes: 30
-    env:
-      DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,6 +34,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-dotnet@v4
+        env:
+          DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
         with:
           dotnet-version: 10.0.x
       - uses: actions/setup-python@v5
