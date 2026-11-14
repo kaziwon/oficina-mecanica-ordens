@@ -85,12 +85,26 @@ servidor Docker compartilhado, projetos, tokens e runner de qualidade por servic
 
 ## Ambiente de entrega da Fase 4
 
-O destino escolhido e Kubernetes LOCAL com kind, nao AWS. O cluster sera
+O destino escolhido e Kubernetes LOCAL com kind, nao AWS. O cluster e
 compartilhado pelos tres servicos; cada um preserva seu banco, recursos e CD
 independente. Sonar fica local e New Relic continua externo. A base Terraform
 e o servidor Sonar pertencem ao repositorio oficina-mecanica-infra-local,
 nao a um microsservico. O [guia do cluster](https://github.com/kaziwon/oficina-mecanica-infra-local/blob/main/docs/16-kubernetes-local.md)
-separa a base ja preparada dos deploys de aplicacao ainda pendentes.
+explica a base compartilhada. O [guia de deploy](https://github.com/kaziwon/oficina-mecanica-infra-local/blob/main/docs/17-deploy-kubernetes-local.md)
+explica o provisionamento e os deploys independentes ja implementados.
+
+Depois de criar a base em infra-local, na raiz deste repositorio:
+
+```bash
+python3 scripts/deploy_local.py
+```
+
+Swagger: http://127.0.0.1:18101/swagger/index.html. Manifestos em k8s/;
+Terraform em infra/kubernetes/. O script gera credenciais privadas fora do
+checkout, publica MySQL/Job de migrations/API somente em oficina-ordens e
+espera readiness. Nao acessa os bancos nem aplica os modulos dos outros servicos.
+O login admin usa a senha de ~/.local/share/oficina-fase4/secrets/common.json,
+nao a senha ficticia do Compose. Nunca publique esse arquivo.
 
 ## Clean Architecture
 
@@ -274,11 +288,18 @@ continuam funcionando sem fila.
 O CI faz build/testes, exige cobertura minima de 80% e publica relatorios.
 O workflow separado qualidade-local.yml foi preparado para SonarQube Community
 no notebook, apos CI bem-sucedido na main, com runner self-hosted macOS de label
-sonar-local. Runners e SONAR_TOKEN cadastrados; falta validar a primeira analise.
+sonar-local. Runners e SONAR_TOKEN cadastrados; a primeira analise real passou.
 O runner deve ter Python 3.10+ e Docker Compose disponiveis no PATH. O workflow
 valida essas ferramentas e usa o Python local, sem instalar em /Users/runner.
 Nao executa codigo de forks/PRs no computador pessoal. BDD no CI ainda e pendente.
 Nenhum recurso AWS ou conta Sonar Cloud foi criado.
+
+O workflow entrega-continua-local.yml aguarda CI e Sonar aprovados para o SHA
+exato da main, reconfirma esses checks, faz build/carregamento da imagem no kind
+e aplica apenas este servico. Manual pela interface Actions tambem exige os
+checks. Ainda precisa de PR/merge e teste real no GitHub para validar o novo CD.
+Qualidade/deploy usam um mutex compartilhado no notebook para evitar saturar
+a memoria, mantendo releases independentes. Os scripts sao testados pelo CI.
 
 ## Migrations
 
@@ -297,11 +318,13 @@ dotnet ef database update --project src/OficinaMecanica.Ordens.Infrastructure --
 ```
 
 No Compose, `Database__ApplyMigrations=true` automatiza essa etapa localmente.
-No futuro deploy, a aplicacao das migrations sera uma etapa controlada da entrega.
+No kind, um Job aplica migrations antes do rollout, com ApplyMigrations=true e
+Database__MigrateOnly=true. O processo encerra sem HTTP/workers. A API normal
+usa ApplyMigrations=false. Falha no Job impede atualizar a API.
 
 ## Proximos incrementos
 
-- Bancos/mensageria, recursos Kubernetes e CD independente no kind local.
-- New Relic distribuido, validar Sonar/runners, BDD no CI e evidencias finais.
+- Publicar por PR e validar o novo CD no GitHub.
+- New Relic distribuido, metrics-server/HPA, BDD no CI e evidencias finais.
 
 Esta etapa nao cria recursos na AWS nem depende dos repositorios da Fase 3.

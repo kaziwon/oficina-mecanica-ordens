@@ -4,6 +4,10 @@
 .git
 .sonarqube
 .scannerwork
+**/.terraform
+**/*.tfstate*
+**/*.tfplan
+**/*.tfvars*
 .env
 .env.*
 tests
