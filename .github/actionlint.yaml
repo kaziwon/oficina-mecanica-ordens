@@ -1,0 +1,2 @@
+self-hosted-runner:
+  labels: [sonar-local, kind-local]
