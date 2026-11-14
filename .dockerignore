@@ -2,6 +2,8 @@
 **/obj
 **/TestResults
 .git
+.sonarqube
+.scannerwork
 .env
 .env.*
 tests

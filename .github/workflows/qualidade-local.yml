@@ -1,0 +1,59 @@
+name: Qualidade local - Ordens
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Integracao continua - Ordens"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sonar-local-ordens
+  cancel-in-progress: false
+
+jobs:
+  sonar:
+    name: SonarQube local
+    # Nunca executar codigo de forks/PRs no computador pessoal.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: [self-hosted, macOS, sonar-local]
+    timeout-minutes: 30
+    env:
+      DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Analisar codigo, testes, cobertura e quality gate
+        env:
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL || 'http://127.0.0.1:9000' }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: bash scripts/sonar_scan.sh
+      - name: Publicar evidencias locais de qualidade
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qualidade-local-ordens-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            TestResults/sonar/**/*.trx
+            TestResults/sonar/**/coverage.cobertura.xml
+            TestResults/sonar/**/coverage.opencover.xml
+            TestResults/sonar/**/cobertura-resumo.json
+          if-no-files-found: warn

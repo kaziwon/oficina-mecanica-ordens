@@ -1,0 +1,5 @@
+services:
+  elasticmq:
+    image: softwaremill/elasticmq:1.7.1
+    ports:
+      - "127.0.0.1::9324"

@@ -96,7 +96,8 @@ local, nao um resultado de Sonar ou de deploy em nuvem. Reexecute apos editar.
 
 ## Pendencias externas deliberadas
 
-Integrar BDD/verificador ao CI, configurar SonarQube/SonarQube Cloud, cadastrar
-Secrets/Variables e habilitar quality gate ficam para a etapa de pipelines.
-Nao foram criadas contas, tokens, projetos Sonar ou recursos AWS. A cobertura
-ja pode ser comprovada localmente; isso nao equivale a analise Sonar pronta.
+O bloqueio de 80% foi acrescentado ao CI. O [guia do Sonar](https://github.com/kaziwon/oficina-mecanica-infra-local/blob/main/docs/15-sonarqube-local.md)
+agora prepara SonarQube Community local e workflow de qualidade apos CI na main.
+Tokens, runners e primeira analise autenticada ainda precisam ser validados;
+isso nao equivale a quality gate aprovado. BDD no CI continua pendente.
+Nao foi criada conta Sonar Cloud nem recurso AWS.

@@ -80,6 +80,17 @@ O [guia de recuperacao](docs/integracao/13-recuperacao-saga.md) fecha a consulta
 administrativa de pagamentos/estornos incertos e o replay seguro das DLQs locais.
 O [guia de qualidade local](docs/integracao/14-testes-qualidade-local.md) explica
 o BDD completo e a verificacao de cobertura minima de 80% por servico.
+O [guia de SonarQube local](https://github.com/kaziwon/oficina-mecanica-infra-local/blob/main/docs/15-sonarqube-local.md) explica o
+servidor Docker compartilhado, projetos, tokens e runner de qualidade por servico.
+
+## Ambiente de entrega da Fase 4
+
+O destino escolhido e Kubernetes LOCAL com kind, nao AWS. O cluster sera
+compartilhado pelos tres servicos; cada um preserva seu banco, recursos e CD
+independente. Sonar fica local e New Relic continua externo. A base Terraform
+e o servidor Sonar pertencem ao repositorio oficina-mecanica-infra-local,
+nao a um microsservico. O [guia do cluster](https://github.com/kaziwon/oficina-mecanica-infra-local/blob/main/docs/16-kubernetes-local.md)
+separa a base ja preparada dos deploys de aplicacao ainda pendentes.
 
 ## Clean Architecture
 
@@ -260,10 +271,12 @@ confirmacao usando o SDK SQS real. Com `SQS_TEST_ENDPOINT` ausente, somente o
 teste de transporte e marcado como ignorado; as verificacoes de Saga e outbox
 continuam funcionando sem fila.
 
-O CI atual faz build e testes e publica `coverage.cobertura.xml`. O BDD e o
-verificador de 80% ja podem ser executados localmente conforme o guia acima.
-Incluir esses comandos no CI e configurar a analise Sonar ficam para a etapa
-de pipelines. Nenhuma conta, token ou recurso externo foi criado agora.
+O CI faz build/testes, exige cobertura minima de 80% e publica relatorios.
+O workflow separado qualidade-local.yml foi preparado para SonarQube Community
+no notebook, apos CI bem-sucedido na main, com runner self-hosted macOS de label
+sonar-local. Runners e SONAR_TOKEN cadastrados; falta validar a primeira analise.
+Nao executa codigo de forks/PRs no computador pessoal. BDD no CI ainda e pendente.
+Nenhum recurso AWS ou conta Sonar Cloud foi criado.
 
 ## Migrations
 
@@ -286,8 +299,7 @@ No futuro deploy, a aplicacao das migrations sera uma etapa controlada da entreg
 
 ## Proximos incrementos
 
-- Envio de notificacoes do orcamento por canal externo, se exigido.
-- Terraform, Kubernetes, Kong e CD independente para a Fase 4.
-- New Relic distribuido, qualidade no CI e evidencias finais.
+- Bancos/mensageria, recursos Kubernetes e CD independente no kind local.
+- New Relic distribuido, validar Sonar/runners, BDD no CI e evidencias finais.
 
 Esta etapa nao cria recursos na AWS nem depende dos repositorios da Fase 3.
