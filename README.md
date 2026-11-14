@@ -275,6 +275,8 @@ O CI faz build/testes, exige cobertura minima de 80% e publica relatorios.
 O workflow separado qualidade-local.yml foi preparado para SonarQube Community
 no notebook, apos CI bem-sucedido na main, com runner self-hosted macOS de label
 sonar-local. Runners e SONAR_TOKEN cadastrados; falta validar a primeira analise.
+O runner deve ter Python 3.10+ e Docker Compose disponiveis no PATH. O workflow
+valida essas ferramentas e usa o Python local, sem instalar em /Users/runner.
 Nao executa codigo de forks/PRs no computador pessoal. BDD no CI ainda e pendente.
 Nenhum recurso AWS ou conta Sonar Cloud foi criado.
 

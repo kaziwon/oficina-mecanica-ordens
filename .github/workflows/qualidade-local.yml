@@ -38,9 +38,12 @@ jobs:
           DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
         with:
           dotnet-version: 10.0.x
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+      - name: Verificar ferramentas do runner local
+        run: |
+          python3 --version
+          python3 -c 'import sys; assert sys.version_info >= (3, 10), "Instale Python 3.10 ou superior no runner local."'
+          docker compose version
+          docker info --format '{{.ServerVersion}}'
       - name: Analisar codigo, testes, cobertura e quality gate
         env:
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL || 'http://127.0.0.1:9000' }}
