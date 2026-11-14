@@ -24,6 +24,15 @@ public class ExceptionMiddleware
         {
             await EscreverErro(context, 400, exception.Message);
         }
+        catch (AcessoNegadoException exception)
+        {
+            await EscreverErro(context, 403, exception.Message);
+        }
+        catch (IntegracaoOrcamentoException exception)
+        {
+            _logger.LogWarning(exception, "Orcamento remoto indisponivel ou resultado nao confirmado");
+            await EscreverErro(context, 503, exception.Message);
+        }
         catch (InvalidOperationException exception)
         {
             _logger.LogWarning(exception, "Conflito ao processar a requisicao");

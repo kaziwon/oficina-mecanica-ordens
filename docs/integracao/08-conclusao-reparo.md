@@ -17,7 +17,8 @@ persistido, sem novo consumo. Nao recebe pecas, valor ou resultado de pagamento
 no body e nao faz nenhuma chamada financeira.
 
 Finalizada significa reparo terminado, nao veiculo entregue. Nao altera o
-status da OS para Entregue. O fluxo de entrega sera um incremento separado.
+status da OS para Entregue. O [fluxo de entrega](09-entrega-veiculo.md) esta
+implementado como uma operacao administrativa separada em Ordens.
 
 ## O que acontece com o estoque
 
@@ -106,5 +107,6 @@ para confirmar que nao ha nova baixa ou regressao.
 No Postman, apos o roteiro de inicio do reparo, chame o novo POST sem body com
 o token de Execucao. Consulte execucao, pecas e a Saga em Ordens ate Finalizada.
 
-Nada cria recursos AWS. Entrega, compensacoes depois de pagamento/reserva,
-estorno, BDD completo, cobertura minima obrigatoria e Sonar continuam pendentes.
+Nada cria recursos AWS. Compensacoes depois de pagamento/reserva e
+estorno estao no [guia de compensacao paga](10-compensacao-paga.md).
+BDD completo, cobertura minima obrigatoria e Sonar continuam pendentes.

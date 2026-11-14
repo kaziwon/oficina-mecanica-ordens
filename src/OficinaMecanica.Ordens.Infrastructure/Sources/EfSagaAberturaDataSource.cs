@@ -28,7 +28,12 @@ public class EfSagaAberturaDataSource : ISagaAberturaDataSource
             else if (novoStatus == StatusOrdemServico.AguardandoPagamento)
                 ordem.AguardarPagamento(saga.DiagnosticoIniciadoEm!.Value, saga.OrcamentoCriadoEm!.Value, saga.OrcamentoRespondidoEm!.Value);
             else if (novoStatus == StatusOrdemServico.Cancelada)
-                ordem.CancelarPorRecusaOrcamento(registradoEm!.Value);
+            {
+                if (saga.EstornadoEm.HasValue) ordem.CancelarAposEstorno(registradoEm!.Value);
+                else ordem.CancelarPorRecusaOrcamento(registradoEm!.Value);
+            }
+            else if (novoStatus == StatusOrdemServico.CancelamentoPendente)
+                ordem.AguardarEstorno(registradoEm!.Value);
             else if (novoStatus == StatusOrdemServico.PagamentoConfirmado)
                 ordem.ConfirmarPagamento(registradoEm!.Value);
             else if (novoStatus == StatusOrdemServico.AguardandoExecucao)

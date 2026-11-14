@@ -38,6 +38,36 @@ public class EfOrdemServicoDataSource : IOrdemServicoDataSource
             .FirstOrDefault(item => item.Id == id);
     }
 
+    public bool TentarRegistrarEntrega(OrdemServico ordemServico)
+    {
+        var entrega = ordemServico.Historico.Single(item => item.Status == StatusOrdemServico.Entregue);
+        if (ordemServico.Status != StatusOrdemServico.Entregue || entrega.OrdemServicoId != ordemServico.Id)
+            throw new InvalidOperationException("O registro da entrega nao corresponde a OS.");
+        using var transaction = _context.Database.BeginTransaction();
+        // A condicao de status permite que apenas uma requisicao confirme a entrega.
+        var atualizadas = _context.OrdensServico
+            .Where(item => item.Id == ordemServico.Id && item.Status == StatusOrdemServico.Finalizada)
+            .ExecuteUpdate(update => update.SetProperty(item => item.Status, StatusOrdemServico.Entregue));
+        if (atualizadas == 0)
+        {
+            transaction.Rollback();
+            return false;
+        }
+        _context.HistoricoStatus.Add(entrega);
+        _context.SaveChanges();
+        transaction.Commit();
+        return true;
+    }
+
+    public OrdemServico? ObterPorIdDoCliente(Guid id, Guid clienteId)
+        => _context.OrdensServico.AsNoTracking().Include(item => item.Historico)
+            .FirstOrDefault(item => item.Id == id && item.ClienteId == clienteId && item.Cliente!.Ativo);
+
+    public List<OrdemServico> ObterDoCliente(Guid clienteId)
+        => _context.OrdensServico.AsNoTracking().Include(item => item.Historico)
+            .Where(item => item.ClienteId == clienteId && item.Cliente!.Ativo)
+            .OrderByDescending(item => item.CriadaEm).ThenBy(item => item.Id).ToList();
+
     public List<OrdemServico> ObterTodas(StatusOrdemServico? status, bool maisNovasPrimeiro)
     {
         var query = _context.OrdensServico.AsNoTracking().Include(item => item.Historico)

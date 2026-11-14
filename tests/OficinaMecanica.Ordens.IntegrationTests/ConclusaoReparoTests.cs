@@ -104,7 +104,7 @@ public class ConclusaoReparoTests
         Assert.Equal(4, db.Inbox.Count()); Assert.Equal(8, db.HistoricoStatus.Count());
     }
 
-    private static MensagemIntegracao Conclusao(MensagemIntegracao inicio)
+    internal static MensagemIntegracao Conclusao(MensagemIntegracao inicio)
     {
         var concluido = inicio.OccurredAt.AddSeconds(1);
         return new MensagemIntegracao

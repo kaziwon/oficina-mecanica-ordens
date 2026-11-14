@@ -23,6 +23,17 @@ public class SagaAberturaController : ControllerBase
         return saga is null ? NotFound() : Ok(saga);
     }
 
+    [HttpPost("cancelar-reparo")]
+    [ProducesResponseType(typeof(SagaAberturaResponseDto), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public IActionResult CancelarPago(Guid ordemServicoId, [FromBody] CancelarEntradaRequestDto dto)
+    {
+        var saga = _controller.CancelarPago(ordemServicoId, dto.Motivo);
+        return saga is null ? NotFound() : AcceptedAtAction(nameof(Get), new { ordemServicoId }, saga);
+    }
+
     [HttpPost("cancelar-entrada")]
     [ProducesResponseType(typeof(SagaAberturaResponseDto), StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

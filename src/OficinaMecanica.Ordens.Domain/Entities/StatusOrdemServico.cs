@@ -11,5 +11,6 @@ public enum StatusOrdemServico
     Cancelada = 7,
     AguardandoPagamento = 8,
     PagamentoConfirmado = 9,
-    AguardandoExecucao = 10
+    AguardandoExecucao = 10,
+    CancelamentoPendente = 11
 }

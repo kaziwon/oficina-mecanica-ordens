@@ -52,6 +52,7 @@ if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger
 }
 
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy", service = "ordens" })).AllowAnonymous();
 app.MapGet("/health/ready", async (AppDbContext database, CancellationToken cancellationToken) =>

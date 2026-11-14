@@ -19,4 +19,6 @@ public class DadosMensagem
     public string? Moeda { get; set; }
     public DateTime? ReparoIniciadoEm { get; set; }
     public DateTime? ReparoConcluidoEm { get; set; }
+    public Guid? EstornoId { get; set; }
+    public string? EstornoProvedorId { get; set; }
 }

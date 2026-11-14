@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura,opencover</Format>
+          <Include>[OficinaMecanica.Ordens.Domain]*,[OficinaMecanica.Ordens.Application]*,[OficinaMecanica.Ordens.InterfaceAdapters]*,[OficinaMecanica.Ordens.Infrastructure]*,[OficinaMecanica.Ordens.Api]*</Include>
+          <ExcludeByFile>**/Persistence/Migrations/**</ExcludeByFile>
+          <IncludeTestAssembly>false</IncludeTestAssembly>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

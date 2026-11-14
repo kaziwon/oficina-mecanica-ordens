@@ -26,6 +26,8 @@ def chamar(base, rota, token=None, body=None, metodo="GET", status_esperado=None
         with urlopen(request, timeout=15) as response:
             if status_esperado is not None:
                 assert response.status == status_esperado, f"Esperado {status_esperado}, recebido {response.status}"
+            if response.status == 204:
+                return None
             return json.load(response)
     except HTTPError as error:
         if error.code == status_esperado:
@@ -39,7 +41,7 @@ def autenticar(base):
         try:
             chamar(base, "/health/ready")
             break
-        except (URLError, RuntimeError, TimeoutError):
+        except (URLError, RuntimeError, TimeoutError, ConnectionError):
             if time.monotonic() >= limite:
                 raise TimeoutError(f"API nao ficou pronta: {base}")
             time.sleep(1)

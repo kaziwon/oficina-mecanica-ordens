@@ -25,6 +25,15 @@ public class SagaAbertura
     public DateTime? ExecucaoLiberadaEm { get; set; }
     public DateTime? ReparoIniciadoEm { get; set; }
     public DateTime? ReparoConcluidoEm { get; set; }
+    public Guid? PedidoCompensacaoId { get; set; }
+    public StatusSagaAbertura? StatusAntesCompensacao { get; set; }
+    public string? MotivoCompensacao { get; set; }
+    public DateTime? CompensacaoSolicitadaEm { get; set; }
+    public DateTime? CompensacaoRecusadaEm { get; set; }
+    public DateTime? ExecucaoCanceladaEm { get; set; }
+    public Guid? PedidoEstornoId { get; set; }
+    public string? EstornoProvedorId { get; set; }
+    public DateTime? EstornadoEm { get; set; }
     public DateTime? DiagnosticoIniciadoEm { get; set; }
     public DateTime? DiagnosticoConcluidoEm { get; set; }
     public StatusSagaAbertura Status { get; set; }
@@ -177,16 +186,22 @@ public class SagaAbertura
 
     public bool RegistrarResultadoPagamento(Guid pagamentoId, string? provedorId, bool confirmado, DateTime ocorridoEm, string? motivo)
     {
-        if (PagamentoConfirmadoEm.HasValue)
+        if (PagamentoId.HasValue && PagamentoId != pagamentoId)
+            throw new InvalidOperationException("O resultado pertence a outro pagamento.");
+        if (PagamentoProvedorId is not null)
         {
-            if (confirmado && PagamentoId == pagamentoId && PagamentoProvedorId == provedorId) return false;
-            throw new InvalidOperationException("O pagamento confirmado nao pode ser substituido por outro resultado.");
+            // Uma falha tecnica atrasada nao substitui o resultado financeiro ja conhecido.
+            if (!confirmado && provedorId is null) return false;
+            if (PagamentoProvedorId == provedorId && confirmado == PagamentoConfirmadoEm.HasValue) return false;
+            throw new InvalidOperationException("O resultado financeiro conhecido nao pode ser substituido.");
         }
-        if (Status != StatusSagaAbertura.AguardandoPagamento || OrcamentoAprovado != true)
+        var reconciliacao = Status == StatusSagaAbertura.FalhaRequerIntervencao && PagamentoId == pagamentoId;
+        if ((!reconciliacao && Status != StatusSagaAbertura.AguardandoPagamento) || OrcamentoAprovado != true)
             throw new InvalidOperationException("A Saga nao aguarda resultado de pagamento.");
+        if (reconciliacao && !confirmado && provedorId is null) return false;
         PagamentoId = pagamentoId; PagamentoProvedorId = provedorId;
         Status = confirmado ? StatusSagaAbertura.PagamentoConfirmado : StatusSagaAbertura.FalhaRequerIntervencao;
-        if (confirmado) PagamentoConfirmadoEm = ocorridoEm;
+        if (confirmado) { PagamentoConfirmadoEm = ocorridoEm; Motivo = null; }
         else Motivo = motivo;
         Alterada();
         return true;
@@ -208,6 +223,11 @@ public class SagaAbertura
 
     public bool RegistrarRespostaLiberacao(bool aceita, DateTime ocorridoEm, string? motivo)
     {
+        if (PedidoCompensacaoId.HasValue && !CompensacaoRecusadaEm.HasValue)
+        {
+            if (aceita && !ExecucaoLiberadaEm.HasValue) { ExecucaoLiberadaEm = ocorridoEm; Alterada(); }
+            return false;
+        }
         if (ExecucaoLiberadaEm.HasValue && aceita) return false;
         if (Status != StatusSagaAbertura.LiberacaoExecucaoPendente)
             throw new InvalidOperationException("A Saga nao aguarda esta resposta de liberacao.");
@@ -220,6 +240,15 @@ public class SagaAbertura
 
     public bool RegistrarInicioReparo(DateTime iniciadoEm)
     {
+        if (Status == StatusSagaAbertura.CancelamentoPagoPendente)
+            throw new InvalidOperationException("Aguarde a resposta do cancelamento para reprocessar o inicio.");
+        if (ExecucaoCanceladaEm.HasValue)
+        {
+            if (iniciadoEm > ExecucaoCanceladaEm.Value || (ReparoIniciadoEm.HasValue && ReparoIniciadoEm != iniciadoEm))
+                throw new InvalidOperationException("Inicio diverge do reparo cancelado.");
+            if (!ReparoIniciadoEm.HasValue) { ReparoIniciadoEm = iniciadoEm; Alterada(); }
+            return false;
+        }
         if (ReparoIniciadoEm.HasValue)
         {
             if (ReparoIniciadoEm.Value == iniciadoEm) return false;
@@ -248,6 +277,63 @@ public class SagaAbertura
         Status = StatusSagaAbertura.Finalizada;
         Alterada();
         return true;
+    }
+
+    public bool SolicitarCompensacaoPaga(string motivo)
+    {
+        if (PedidoCompensacaoId.HasValue)
+        {
+            if (MotivoCompensacao != motivo) throw new InvalidOperationException("O cancelamento ja foi solicitado com outro motivo.");
+            return false;
+        }
+        if (!PagamentoConfirmadoEm.HasValue || !PagamentoId.HasValue || !PedidoLiberacaoExecucaoId.HasValue
+            || !ExecucaoId.HasValue || !OrcamentoId.HasValue || ReparoConcluidoEm.HasValue
+            || Status is not (StatusSagaAbertura.LiberacaoExecucaoPendente or StatusSagaAbertura.ExecucaoLiberada
+                or StatusSagaAbertura.EmExecucao or StatusSagaAbertura.FalhaRequerIntervencao))
+            throw new InvalidOperationException("Somente reparo pago, ainda nao concluido, permite esta compensacao.");
+        StatusAntesCompensacao = Status; Status = StatusSagaAbertura.CancelamentoPagoPendente;
+        PedidoCompensacaoId = Guid.NewGuid(); MotivoCompensacao = motivo; CompensacaoSolicitadaEm = DateTime.UtcNow;
+        Alterada(); return true;
+    }
+
+    public bool RegistrarCancelamentoPago(bool aceito, DateTime ocorridoEm, string? motivo)
+    {
+        if (ExecucaoCanceladaEm.HasValue)
+        {
+            if (aceito && ExecucaoCanceladaEm == ocorridoEm) return false;
+            throw new InvalidOperationException("O cancelamento ja recebeu outra resposta.");
+        }
+        if (CompensacaoRecusadaEm.HasValue && !aceito) return false;
+        if (Status != StatusSagaAbertura.CancelamentoPagoPendente || !StatusAntesCompensacao.HasValue)
+            throw new InvalidOperationException("A Saga nao aguarda esta resposta de cancelamento.");
+        if (aceito)
+        {
+            ExecucaoCanceladaEm = ocorridoEm; PedidoEstornoId = Guid.NewGuid(); Status = StatusSagaAbertura.EstornoPendente;
+        }
+        else
+        {
+            Status = ReparoIniciadoEm.HasValue ? StatusSagaAbertura.EmExecucao
+                : ExecucaoLiberadaEm.HasValue ? StatusSagaAbertura.ExecucaoLiberada : StatusAntesCompensacao.Value;
+            CompensacaoRecusadaEm = ocorridoEm; Motivo = motivo;
+        }
+        Alterada(); return true;
+    }
+
+    public bool RegistrarEstorno(bool confirmado, string? provedorId, DateTime ocorridoEm, string? motivo)
+    {
+        if (EstornoProvedorId is not null)
+        {
+            if (!confirmado && provedorId is null) return false;
+            if (EstornoProvedorId == provedorId && confirmado == EstornadoEm.HasValue) return false;
+            throw new InvalidOperationException("O resultado conhecido do estorno nao pode ser substituido.");
+        }
+        var reconciliacao = Status == StatusSagaAbertura.EstornoRequerIntervencao;
+        if ((!reconciliacao && Status != StatusSagaAbertura.EstornoPendente) || !ExecucaoCanceladaEm.HasValue)
+            throw new InvalidOperationException("A Saga nao aguarda este resultado de estorno.");
+        if (reconciliacao && !confirmado && provedorId is null) return false;
+        Status = confirmado ? StatusSagaAbertura.CompensadaAposPagamento : StatusSagaAbertura.EstornoRequerIntervencao;
+        EstornoProvedorId = provedorId; if (confirmado) { EstornadoEm = ocorridoEm; Motivo = null; } else Motivo = motivo;
+        Alterada(); return true;
     }
 
     private void Alterada() { Versao++; AtualizadaEm = DateTime.UtcNow; }
