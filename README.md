@@ -6,6 +6,7 @@ primeiro incremento da Fase 4, em repositorio independente da entrega da Fase 3.
 ## O que esta implementado
 
 - Login administrativo com JWT.
+- Login academico de cliente por CPF, com JWT separado e consulta somente das proprias OS.
 - Cadastro, consulta, atualizacao e desativacao de clientes e veiculos.
 - Abertura de OS com CPF/CNPJ e veiculo existentes ou criando os dois cadastros
   na mesma chamada.
@@ -55,6 +56,30 @@ O [guia de conclusao do reparo](docs/integracao/08-conclusao-reparo.md) fecha
 o trecho de execucao: o comando administrativo consome as reservas em Execucao
 e ReparoConcluido finaliza a Saga e a OS, sem marcar entrega. Historico e
 consulta por ID permanecem disponiveis; finalizadas saem da lista operacional.
+
+O [guia de entrega do veiculo](docs/integracao/09-entrega-veiculo.md) adiciona
+o registro administrativo de retirada: somente OS Finalizada passa para
+Entregue. A entrega usa o historico existente e nao altera Execucao, pagamento
+ou estoque. Repeticoes nao duplicam o registro.
+
+O [guia de compensacao paga](docs/integracao/10-compensacao-paga.md) adiciona
+cancelamento antes da conclusao: Execucao para o reparo e libera reservas;
+so depois Cobranca solicita o estorno mock. A OS fica CancelamentoPendente
+ate confirmar o estorno, sem repor pecas consumidas ou apagar a cobranca original.
+
+O [guia de acesso do cliente](docs/integracao/11-acesso-cliente.md) adiciona
+login por CPF e consultas proprias, com bloqueio de rotas administrativas.
+CPF sozinho nao comprova identidade: este login e uma simplificacao do trabalho,
+nao uma solucao de autenticacao para producao.
+
+O [guia de orcamento do cliente](docs/integracao/12-orcamento-cliente.md) conecta
+consulta, aprovacao e recusa autenticadas a Cobranca por HTTP interno. A decisao
+continua sendo gravada por Cobranca e alimenta a Saga existente por eventos.
+
+O [guia de recuperacao](docs/integracao/13-recuperacao-saga.md) fecha a consulta
+administrativa de pagamentos/estornos incertos e o replay seguro das DLQs locais.
+O [guia de qualidade local](docs/integracao/14-testes-qualidade-local.md) explica
+o BDD completo e a verificacao de cobertura minima de 80% por servico.
 
 ## Clean Architecture
 
@@ -186,25 +211,34 @@ Misturar as alternativas retorna HTTP 400. CPF/CNPJ ou placa duplicados retornam
 | Metodo | Rota | Uso |
 |---|---|---|
 | POST | `/api/auth/login` | Login administrativo |
+| POST | `/api/auth/cliente` | Login academico por CPF |
+| GET | `/api/minhas-ordens` | Consultar somente as proprias OS com token de cliente |
+| GET | `/api/minhas-ordens/{id}` | Consultar OS propria e historico |
+| GET | `/api/minhas-ordens/{id}/orcamento` | Consultar itens e valor do proprio orcamento |
+| POST | `/api/minhas-ordens/{id}/orcamento/aprovar` | Aprovar sem informar valor ou status |
+| POST | `/api/minhas-ordens/{id}/orcamento/recusar` | Recusar com motivo |
 | GET / POST | `/api/clientes` | Listar e cadastrar clientes |
 | GET / PUT / DELETE | `/api/clientes/{id}` | Consultar, atualizar e desativar cliente |
 | GET / POST | `/api/veiculos` | Listar e cadastrar veiculos |
 | GET / PUT / DELETE | `/api/veiculos/{id}` | Consultar, atualizar e desativar veiculo |
 | POST | `/api/ordensservico` | Abrir OS |
+| POST | `/api/ordensservico/{id}/entregar` | Registrar entrega de OS finalizada |
 | GET | `/api/ordensservico/{id}` | Consultar OS e historico |
 | GET | `/api/ordensservico?status=Recebida&ordenacao=maisAntigo` | Listar OS |
 | GET | `/api/ordensservico/{id}/saga-abertura` | Acompanhar o registro ou a compensacao |
 | POST | `/api/ordensservico/{id}/cancelar-entrada` | Solicitar compensacao antes do diagnostico |
+| POST | `/api/ordensservico/{id}/cancelar-reparo` | Solicitar cancelamento de reparo pago, antes da conclusao |
 
-O login e os healthchecks sao publicos. As operacoes de cadastro e OS exigem JWT
-administrativo. `ordenacao` aceita `maisAntigo` ou `maisNovo`. A prioridade de
+Os logins e os healthchecks sao publicos. Cadastros e `/api/ordensservico` exigem
+JWT administrativo. `/api/minhas-ordens` exige o token de cliente do login por CPF.
+`ordenacao` aceita `maisAntigo` ou `maisNovo`. A prioridade de
 status e EmExecucao, AguardandoExecucao, PagamentoConfirmado, AguardandoPagamento,
 AguardandoAprovacao, EmDiagnostico e Recebida. Finalizadas,
 entregues e canceladas ficam fora da listagem operacional; a consulta por ID
 preserva o acesso ao historico.
 
-O login de cliente por CPF e a autorizacao de consultas do proprio cliente serao
-integrados em uma proxima etapa. A API rejeita campos JSON desconhecidos para
+O login por CPF, as consultas proprias e a resposta do orcamento estao implementados.
+A API rejeita campos JSON desconhecidos para
 evitar aceitar e ignorar dados que pertencem aos outros servicos.
 
 ## Testes
@@ -226,9 +260,10 @@ confirmacao usando o SDK SQS real. Com `SQS_TEST_ENDPOINT` ausente, somente o
 teste de transporte e marcado como ignorado; as verificacoes de Saga e outbox
 continuam funcionando sem fila.
 
-O CI faz build e testes e publica os arquivos `coverage.cobertura.xml` como
-artefato. A verificacao obrigatoria de 80%, o Sonar e o fluxo BDD distribuido
-serao concluidos nas etapas de qualidade e integracao da Fase 4.
+O CI atual faz build e testes e publica `coverage.cobertura.xml`. O BDD e o
+verificador de 80% ja podem ser executados localmente conforme o guia acima.
+Incluir esses comandos no CI e configurar a analise Sonar ficam para a etapa
+de pipelines. Nenhuma conta, token ou recurso externo foi criado agora.
 
 ## Migrations
 
@@ -251,9 +286,7 @@ No futuro deploy, a aplicacao das migrations sera uma etapa controlada da entreg
 
 ## Proximos incrementos
 
-- Entrega do veiculo e compensacoes das reservas, com regras explicitas.
-- Reconciliacao, nova tentativa de negocio e compensacoes financeiras.
-- Autenticacao por CPF e autorizacao por cliente.
+- Envio de notificacoes do orcamento por canal externo, se exigido.
 - Terraform, Kubernetes, Kong e CD independente para a Fase 4.
 - New Relic distribuido, qualidade no CI e evidencias finais.
 

@@ -39,6 +39,16 @@ public class OrdensServicoController : ControllerBase
         return ordem is null ? NotFound() : Ok(ordem);
     }
 
+    [HttpPost("{id:guid}/entregar")]
+    [ProducesResponseType(typeof(OrdemServicoResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public IActionResult Entregar(Guid id)
+    {
+        var ordem = _controller.Entregar(id);
+        return ordem is null ? NotFound() : Ok(ordem);
+    }
+
     [HttpGet]
     [ProducesResponseType(typeof(List<OrdemServicoResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

@@ -63,6 +63,31 @@ public class OrdemServico
         RegistrarStatus(StatusOrdemServico.Finalizada, concluidoEm);
     }
 
+    public void AguardarEstorno(DateTime registradoEm)
+    {
+        if (Status == StatusOrdemServico.CancelamentoPendente) return;
+        if (Status is not (StatusOrdemServico.PagamentoConfirmado or StatusOrdemServico.AguardandoExecucao or StatusOrdemServico.EmExecucao))
+            throw new InvalidOperationException("A OS nao permite aguardar estorno neste estado.");
+        RegistrarStatus(StatusOrdemServico.CancelamentoPendente, registradoEm);
+    }
+
+    public void CancelarAposEstorno(DateTime registradoEm)
+    {
+        if (Status == StatusOrdemServico.Cancelada) return;
+        if (Status != StatusOrdemServico.CancelamentoPendente)
+            throw new InvalidOperationException("A OS nao aguarda confirmacao de estorno.");
+        RegistrarStatus(StatusOrdemServico.Cancelada, registradoEm);
+    }
+
+    public bool Entregar()
+    {
+        if (Status == StatusOrdemServico.Entregue) return false;
+        if (Status != StatusOrdemServico.Finalizada)
+            throw new InvalidOperationException("Somente uma OS finalizada pode ser entregue.");
+        RegistrarStatus(StatusOrdemServico.Entregue, DateTime.UtcNow);
+        return true;
+    }
+
     public void CancelarPorRecusaOrcamento(DateTime registradoEm)
     {
         if (Status == StatusOrdemServico.Cancelada) return;

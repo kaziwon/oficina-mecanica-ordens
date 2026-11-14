@@ -7,5 +7,8 @@ public interface IOrdemServicoGateway
 {
     OrdemServico Adicionar(OrdemServico ordemServico, SagaAbertura saga, MensagemIntegracao mensagem);
     OrdemServico? ObterPorId(Guid id);
+    OrdemServico? ObterPorIdDoCliente(Guid id, Guid clienteId);
+    List<OrdemServico> ObterDoCliente(Guid clienteId);
+    bool TentarRegistrarEntrega(OrdemServico ordemServico);
     List<OrdemServico> ObterTodas(StatusOrdemServico? status, bool maisNovasPrimeiro);
 }

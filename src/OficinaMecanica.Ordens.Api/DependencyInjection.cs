@@ -14,6 +14,7 @@ using OficinaMecanica.Ordens.Infrastructure.Sources;
 using OficinaMecanica.Ordens.InterfaceAdapters.Controllers;
 using OficinaMecanica.Ordens.InterfaceAdapters.DataSources;
 using OficinaMecanica.Ordens.InterfaceAdapters.Gateways;
+using OficinaMecanica.Ordens.Authentication;
 
 namespace OficinaMecanica.Ordens;
 
@@ -39,6 +40,9 @@ public static class DependencyInjection
         services.AddScoped<ProcessarRespostaLiberacaoUseCase>();
         services.AddScoped<ProcessarReparoIniciadoUseCase>();
         services.AddScoped<ProcessarReparoConcluidoUseCase>();
+        services.AddScoped<CancelarReparoPagoUseCase>();
+        services.AddScoped<ProcessarCancelamentoPagoUseCase>();
+        services.AddScoped<ProcessarResultadoEstornoUseCase>();
         services.AddScoped<IntegracaoCleanController>();
         services.AddScoped<SagaAberturaCleanController>();
         services.AddDbContext<AppDbContext>((provider, options) =>
@@ -52,6 +56,8 @@ public static class DependencyInjection
                 "Configure JwtSettings:SecretKey com pelo menos 32 bytes.")
             .Validate(settings => !string.IsNullOrWhiteSpace(settings.Issuer)
                 && !string.IsNullOrWhiteSpace(settings.Audience), "Configure issuer e audience do JWT.")
+            .Validate(settings => !string.IsNullOrWhiteSpace(settings.ClienteAudience)
+                && settings.ClienteAudience != settings.Audience, "A audience de cliente deve ser diferente da administrativa.")
             .ValidateOnStart();
         services.AddOptions<AdminUserSettings>().Bind(configuration.GetSection("AdminUserSettings"))
             .Validate(settings => !string.IsNullOrWhiteSpace(settings.Username)
@@ -77,6 +83,32 @@ public static class DependencyInjection
                 };
             });
         services.AddAuthorization();
+        services.AddOptions<OrcamentoClienteSettings>().Bind(configuration.GetSection("OrcamentoCliente"))
+            .Validate(settings => !settings.Enabled || (!string.IsNullOrWhiteSpace(settings.SecretKey)
+                && Encoding.UTF8.GetByteCount(settings.SecretKey) >= 32 && settings.SecretKey != configuration["JwtSettings:SecretKey"]
+                && Uri.TryCreate(settings.BaseUrl, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"
+                && string.IsNullOrEmpty(uri.UserInfo) && string.IsNullOrEmpty(uri.Query) && string.IsNullOrEmpty(uri.Fragment)),
+                "Configure URL e uma chave exclusiva de pelo menos 32 bytes para OrcamentoCliente.").ValidateOnStart();
+        services.AddHttpClient<IOrcamentoClienteSource, HttpOrcamentoClienteSource>((provider, http) =>
+        {
+            var settings = provider.GetRequiredService<IOptions<OrcamentoClienteSettings>>().Value;
+            if (settings.Enabled) http.BaseAddress = new Uri(settings.BaseUrl.TrimEnd('/') + "/");
+            http.Timeout = TimeSpan.FromSeconds(8);
+            http.MaxResponseContentBufferSize = 1024 * 1024;
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+        services.AddScoped<IOrcamentoClienteGateway, OrcamentoClienteGateway>();
+        services.AddScoped<Application.Services.AcessoOrcamentoCliente>();
+        services.AddScoped<Application.UseCases.Orcamentos.ObterMeuOrcamentoUseCase>();
+        services.AddScoped<Application.UseCases.Orcamentos.ResponderMeuOrcamentoUseCase>();
+        services.AddScoped<MeuOrcamentoCleanController>();
+        ClienteAuthentication.Adicionar(services);
+        services.AddScoped<IClienteTokenSource, JwtClienteTokenSource>();
+        services.AddScoped<IClienteTokenGateway, ClienteTokenGateway>();
+        services.AddScoped<LoginClienteUseCase>();
+        services.AddScoped<AuthClienteCleanController>();
+        services.AddScoped<ObterMinhasOrdensServicoUseCase>();
+        services.AddScoped<ObterMinhaOrdemServicoPorIdUseCase>();
+        services.AddScoped<MinhasOrdensServicoCleanController>();
 
         services.AddScoped<IClienteDataSource, EfClienteDataSource>();
         services.AddScoped<IVeiculoDataSource, EfVeiculoDataSource>();
@@ -107,6 +139,7 @@ public static class DependencyInjection
         services.AddScoped<CriarOrdemServicoUseCase>();
         services.AddScoped<ObterOrdemServicoPorIdUseCase>();
         services.AddScoped<ObterTodasOrdensServicoUseCase>();
+        services.AddScoped<EntregarOrdemServicoUseCase>();
         services.AddScoped<AuthCleanController>();
         services.AddScoped<ClientesCleanController>();
         services.AddScoped<VeiculosCleanController>();

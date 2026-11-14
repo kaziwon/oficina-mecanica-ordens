@@ -31,7 +31,7 @@ public class IntegracaoWorker : BackgroundService
                     var outbox = scope.ServiceProvider.GetRequiredService<IOutboxGateway>();
                     foreach (var mensagem in outbox.ObterPendentes(10))
                     {
-                        var destino = mensagem.Type is "GerarOrcamento" or "SolicitarPagamento" ? _settings.OrcamentosQueue : _settings.ComandosQueue;
+                        var destino = mensagem.Type is "GerarOrcamento" or "SolicitarPagamento" or "SolicitarEstorno" ? _settings.OrcamentosQueue : _settings.ComandosQueue;
                         await _transport.Enviar(destino, MensagemSerializer.Serializar(mensagem), stoppingToken);
                         outbox.ConfirmarPublicacao(mensagem.MessageId);
                         _logger.LogInformation("Mensagem {MessageId} da Saga {SagaId} publicada. CorrelationId={CorrelationId}",

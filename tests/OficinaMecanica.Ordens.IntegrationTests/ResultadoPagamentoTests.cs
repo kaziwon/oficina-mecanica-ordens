@@ -83,6 +83,34 @@ public class ResultadoPagamentoTests
         Assert.Equal(StatusOrdemServico.PagamentoConfirmado, banco.OrdensServico.Single().Status); Assert.Equal(2, banco.Inbox.Count());
     }
 
+    [Theory]
+    [InlineData("PagamentoConfirmado")]
+    [InlineData("PagamentoRecusado")]
+    public async Task Reconciliacao_AceitaResultadoConhecidoSemRepetirLiberacaoOuRegredirPorFalhaAntiga(string tipo)
+    {
+        using var factory = await Criar(); var falha = Resultado(factory, "FalhaProcessamentoPagamento");
+        Processar(factory, falha);
+        var resultado = Resultado(factory, tipo); resultado.Payload.PagamentoId = falha.Payload.PagamentoId;
+        Processar(factory, resultado); Processar(factory, resultado);
+        falha.MessageId = Guid.NewGuid(); Processar(factory, falha);
+        using var scope = factory.Services.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var saga = db.SagasAbertura.Single();
+        Assert.Equal(falha.Payload.PagamentoId, saga.PagamentoId); Assert.Equal("mock-id", saga.PagamentoProvedorId);
+        Assert.Equal(tipo == "PagamentoConfirmado" ? StatusSagaAbertura.LiberacaoExecucaoPendente : StatusSagaAbertura.FalhaRequerIntervencao, saga.Status);
+        Assert.Equal(tipo == "PagamentoConfirmado" ? 3 : 2, db.Outbox.Count());
+        if (tipo == "PagamentoConfirmado") Assert.Null(saga.Motivo);
+    }
+
+    [Fact]
+    public async Task Reconciliacao_NaoSubstituiPagamentoRecusadoConhecidoNemTrocaIdentificador()
+    {
+        using var factory = await Criar(); var recusa = Resultado(factory, "PagamentoRecusado"); Processar(factory, recusa);
+        var confirmacao = Resultado(factory, "PagamentoConfirmado"); confirmacao.Payload.PagamentoId = recusa.Payload.PagamentoId;
+        Assert.Throws<InvalidOperationException>(() => Processar(factory, confirmacao));
+        confirmacao.Payload.PagamentoId = Guid.NewGuid();
+        Assert.Throws<InvalidOperationException>(() => Processar(factory, confirmacao));
+    }
+
     private static async Task<OrdensApiFactory> Criar()
     {
         var factory = new OrdensApiFactory(); using var client = factory.CreateClient(); await ApiTestHelper.Autenticar(client);

@@ -16,6 +16,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       Mock__ConnectionString: Data Source=/data/pagamentos.db;Default Timeout=5
       Mock__Resultado: ${PAGAMENTO_MOCK_RESULTADO:-approved}
+      Mock__ResultadoEstorno: ${PAGAMENTO_MOCK_ESTORNO_RESULTADO:-refunded}
       Mock__ClientId: oficina-local
       Mock__ClientSecret: segredo-do-mock-somente-local
     ports: ["127.0.0.1:18094:8080"]
@@ -43,6 +44,8 @@ services:
       context: ${COBRANCA_PATH:-../oficina-mecanica-cobranca}
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      OrdensAtendimento__Enabled: "true"
+      OrdensAtendimento__SecretKey: ${ORDENS_COBRANCA_SECRET:-chave-exclusiva-da-integracao-ordens-cobranca-local-1234567890}
       ConnectionStrings__DefaultConnection: Server=mysql-cobranca;Database=cobranca;User=cobranca_app;Password=LocalCobrancaSaga123
       PagamentoMock__Enabled: "true"
       PagamentoMock__BaseUrl: http://pagamento-mock:8080/
@@ -140,6 +143,9 @@ services:
     build: .
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      OrcamentoCliente__Enabled: "true"
+      OrcamentoCliente__BaseUrl: http://cobranca:8080/
+      OrcamentoCliente__SecretKey: ${ORDENS_COBRANCA_SECRET:-chave-exclusiva-da-integracao-ordens-cobranca-local-1234567890}
       ConnectionStrings__DefaultConnection: Server=mysql;Database=ordens;User=ordens_app;Password=LocalOrdensSaga123
       Database__ApplyMigrations: "true"
       JwtSettings__SecretKey: chave-local-da-integracao-fase4-1234567890

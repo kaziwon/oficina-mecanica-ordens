@@ -29,7 +29,7 @@ public class ProcessarReparoConcluidoUseCase
             || dados.DiagnosticoIniciadoEm.HasValue || dados.DiagnosticoConcluidoEm.HasValue)
             throw new ValidacaoException("A conclusao do reparo diverge da autorizacao e do inicio da Saga.");
         if (_sagas.FoiProcessada(mensagem.MessageId)) return;
-        if (saga.Status is StatusSagaAbertura.LiberacaoExecucaoPendente or StatusSagaAbertura.ExecucaoLiberada)
+        if (saga.Status is StatusSagaAbertura.LiberacaoExecucaoPendente or StatusSagaAbertura.ExecucaoLiberada or StatusSagaAbertura.CancelamentoPagoPendente)
             throw new InvalidOperationException("Aguarde a confirmacao do inicio antes de reprocessar a conclusao.");
         var alterada = saga.RegistrarConclusaoReparo(dados.ReparoIniciadoEm.Value, mensagem.OccurredAt);
         _sagas.Salvar(saga, mensagem.MessageId, null,

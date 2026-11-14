@@ -12,15 +12,18 @@ public class OrdensServicoCleanController
     private readonly CriarOrdemServicoUseCase _criar;
     private readonly ObterOrdemServicoPorIdUseCase _obter;
     private readonly ObterTodasOrdensServicoUseCase _listar;
+    private readonly EntregarOrdemServicoUseCase _entregar;
 
     public OrdensServicoCleanController(
         CriarOrdemServicoUseCase criar,
         ObterOrdemServicoPorIdUseCase obter,
-        ObterTodasOrdensServicoUseCase listar)
+        ObterTodasOrdensServicoUseCase listar,
+        EntregarOrdemServicoUseCase entregar)
     {
         _criar = criar;
         _obter = obter;
         _listar = listar;
+        _entregar = entregar;
     }
 
     public OrdemServicoResponseDto Criar(OrdemServicoRequestDto request, string? correlationId = null)
@@ -39,6 +42,12 @@ public class OrdensServicoCleanController
     public OrdemServicoResponseDto? ObterPorId(Guid id)
     {
         var output = _obter.Executar(id);
+        return output is null ? null : OrdemServicoPresenter.Apresentar(output);
+    }
+
+    public OrdemServicoResponseDto? Entregar(Guid id)
+    {
+        var output = _entregar.Executar(id);
         return output is null ? null : OrdemServicoPresenter.Apresentar(output);
     }
 
