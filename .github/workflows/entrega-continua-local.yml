@@ -1,0 +1,52 @@
+name: Entrega continua local - Ordens
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Qualidade local - Ordens"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: entrega-local-ordens
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy no kind local
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: [self-hosted, macOS, kind-local]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.7
+          terraform_wrapper: false
+      - name: Verificar ferramentas locais
+        run: |
+          python3 --version
+          docker version
+          kubectl version --client
+      - name: Validar revisao, construir imagem e publicar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          DEPLOY_REPOSITORY: ${{ github.repository }}
+        run: python3 scripts/deploy_local.py --ci --sha "$DEPLOY_SHA" --repository "$DEPLOY_REPOSITORY"
+      - name: Registrar endereco da API
+        run: |
+          python3 -c 'import json,os; from pathlib import Path; c=json.loads(Path("k8s/deployment.json").read_text()); p=Path(os.environ["GITHUB_STEP_SUMMARY"]); p.write_text("### Deploy local concluido\nServico: " + c["service"] + "\nSwagger: http://127.0.0.1:" + str(c["host_port"]) + "/swagger/index.html\n")'

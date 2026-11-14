@@ -35,11 +35,22 @@ builder.Services.AddOrdens(builder.Configuration);
 
 var app = builder.Build();
 
+if (app.Configuration.GetValue<bool>("Database:MigrateOnly")
+    && !app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
+    throw new InvalidOperationException("Database:MigrateOnly exige Database:ApplyMigrations=true.");
+
 if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
 {
     using var scope = app.Services.CreateScope();
     var database = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await database.Database.MigrateAsync();
+}
+
+if (app.Configuration.GetValue<bool>("Database:MigrateOnly"))
+{
+    app.Logger.LogInformation("Migrations de Ordens concluidas; nenhuma API ou worker foi iniciado.");
+    await app.DisposeAsync();
+    return;
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();

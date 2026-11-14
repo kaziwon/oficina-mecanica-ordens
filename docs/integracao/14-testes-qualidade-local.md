@@ -85,9 +85,9 @@ geradas excluidas:
 
 | Servico | Unitarios | Integracao | Linhas cobertas/total | Cobertura |
 | --- | ---: | ---: | ---: | ---: |
-| Ordens | 98 | 157 | 2461/2617 | 94,04% |
+| Ordens | 98 | 157 | 2464/2624 | 93,90% |
 | Execucao | 54 | 61 | 1990/2066 | 96,32% |
-| Cobranca | 55 | 114 | 1696/1837 | 92,32% |
+| Cobranca | 55 | 114 | 1699/1844 | 92,14% |
 
 Total: 539 testes .NET, sem ignorados nesta verificacao. Tambem passaram 10
 testes das ferramentas locais, os 3 cenarios BDD e o script HTTP de recuperacao
@@ -98,6 +98,28 @@ local, nao um resultado de Sonar ou de deploy em nuvem. Reexecute apos editar.
 
 O bloqueio de 80% foi acrescentado ao CI. O [guia do Sonar](https://github.com/kaziwon/oficina-mecanica-infra-local/blob/main/docs/15-sonarqube-local.md)
 agora prepara SonarQube Community local e workflow de qualidade apos CI na main.
-Tokens, runners e primeira analise autenticada ainda precisam ser validados;
-isso nao equivale a quality gate aprovado. BDD no CI continua pendente.
+Tokens e runners configurados; as primeiras analises autenticadas dos tres
+servicos passaram. Cada commit novo precisa ser analisado novamente. O CD
+independente aguarda CI e Sonar do mesmo SHA; precisa de PR e validacao real
+depois desta implementacao. BDD no CI continua pendente.
 Nao foi criada conta Sonar Cloud nem recurso AWS.
+
+## Executar BDD no kind
+
+Os mesmos cenarios aceitam as portas do novo ambiente, sem alterar codigo.
+Com as tres APIs prontas, na raiz de Ordens, usando o Python/venv do guia:
+
+```bash
+export ORDENS_URL=http://127.0.0.1:18101
+export EXECUCAO_URL=http://127.0.0.1:18102
+export COBRANCA_URL=http://127.0.0.1:18103
+read -s SAGA_ADMIN_PASSWORD
+export SAGA_ADMIN_PASSWORD
+behave tests/acceptance/features
+unset SAGA_ADMIN_PASSWORD
+```
+
+O read espera voce informar a senha privada de admin sem exibi-la. Nao use
+a senha do Compose. Os cenarios criam dados ficticios e exigem URLs locais.
+O [guia Kubernetes](https://github.com/kaziwon/oficina-mecanica-infra-local/blob/main/docs/17-deploy-kubernetes-local.md)
+explica startup, portas, persistencia e isolamento entre repositorios.

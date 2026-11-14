@@ -58,3 +58,27 @@ jobs:
             TestResults/cobertura-resumo.json
             TestResults/**/*.trx
           if-no-files-found: warn
+
+  kubernetes:
+    name: Kubernetes e deploy local
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.7
+          terraform_wrapper: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verificar seguranca do CD e manifestos
+        run: |
+          python3 -m pip install -r tests/deployment/requirements.txt
+          python3 -m unittest discover -s tests/deployment -v
+      - name: Validar Terraform sem provisionamento
+        run: |
+          terraform -chdir=infra/kubernetes init -backend=false -input=false -lockfile=readonly
+          terraform -chdir=infra/kubernetes fmt -check -recursive
+          terraform -chdir=infra/kubernetes validate

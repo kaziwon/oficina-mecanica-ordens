@@ -1,0 +1,6 @@
+{
+  "service": "ordens",
+  "solution": "OficinaMecanica.Ordens.slnx",
+  "host_port": 18101,
+  "node_port": 30101
+}
