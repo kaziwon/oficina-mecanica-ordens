@@ -1,6 +1,8 @@
 **/bin/
 **/obj/
 **/TestResults/
+.sonarqube/
+.scannerwork/
 coverage/
 __pycache__/
 .venv-tests/

@@ -39,11 +39,18 @@ jobs:
       - run: dotnet restore OficinaMecanica.Ordens.slnx
       - run: >-
           dotnet test OficinaMecanica.Ordens.slnx --configuration Release --no-restore
-          --collect:"XPlat Code Coverage" --results-directory TestResults
+          --settings cobertura.runsettings --collect:"XPlat Code Coverage"
+          --logger trx --results-directory TestResults
+      - name: Exigir cobertura minima de 80%
+        run: python3 tools/verificar_cobertura.py --servico Ordens --diretorio TestResults --json TestResults/cobertura-resumo.json
       - name: Publicar relatorios de cobertura
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cobertura-ordens
-          path: TestResults/**/coverage.cobertura.xml
+          path: |
+            TestResults/**/coverage.cobertura.xml
+            TestResults/**/coverage.opencover.xml
+            TestResults/cobertura-resumo.json
+            TestResults/**/*.trx
           if-no-files-found: warn
