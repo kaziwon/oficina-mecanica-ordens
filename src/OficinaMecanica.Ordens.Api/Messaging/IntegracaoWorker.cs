@@ -26,8 +26,9 @@ public class IntegracaoWorker : BackgroundService
         var destino = mensagem.Type is "GerarOrcamento" or "SolicitarPagamento" or "SolicitarEstorno" ? _settings.OrcamentosQueue : _settings.ComandosQueue;
         await _transport.Enviar(destino, MensagemSerializer.Serializar(mensagem), token);
         outbox.ConfirmarPublicacao(mensagem.MessageId);
-        _logger.LogInformation("Mensagem {MessageId} da Saga {SagaId} publicada. CorrelationId={CorrelationId}",
-            mensagem.MessageId, mensagem.SagaId, mensagem.CorrelationId);
+        if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("Mensagem {MessageId} da Saga {SagaId} publicada. CorrelationId={CorrelationId}",
+                mensagem.MessageId, mensagem.SagaId, mensagem.CorrelationId);
     }
 
     private async Task ReceberEProcessar(CancellationToken token)
@@ -37,12 +38,14 @@ public class IntegracaoWorker : BackgroundService
             using var scope = _scopes.CreateScope();
             var mensagem = MensagemSerializer.Desserializar(recebida.Body);
             using var logScope = CriarEscopo(mensagem);
-            _logger.LogInformation("Processando mensagem {MessageId} do tipo {MessageType}. SagaId={SagaId} CorrelationId={CorrelationId}",
-                mensagem.MessageId, mensagem.Type, mensagem.SagaId, mensagem.CorrelationId);
+            if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Processando mensagem {MessageId} do tipo {MessageType}. SagaId={SagaId} CorrelationId={CorrelationId}",
+                    mensagem.MessageId, mensagem.Type, mensagem.SagaId, mensagem.CorrelationId);
             scope.ServiceProvider.GetRequiredService<IntegracaoCleanController>().Processar(mensagem);
             // Confirmacao continua depois da transacao local; falhas permitem reentrega/DLQ.
             await _transport.Confirmar(_settings.EventosQueue, recebida.ReceiptHandle, token);
-            _logger.LogInformation("Mensagem {MessageId} processada", mensagem.MessageId);
+            if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Mensagem {MessageId} processada", mensagem.MessageId);
         }
     }
 
