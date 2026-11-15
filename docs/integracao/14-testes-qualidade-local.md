@@ -85,14 +85,28 @@ geradas excluidas:
 
 | Servico | Unitarios | Integracao | Linhas cobertas/total | Cobertura |
 | --- | ---: | ---: | ---: | ---: |
-| Ordens | 98 | 159 | 2503/2638 | 94,88% |
-| Execucao | 54 | 63 | 2029/2081 | 97,50% |
-| Cobranca | 55 | 116 | 1738/1859 | 93,49% |
+| Ordens | 98 | 168 | 2514/2641 | 95,19% |
+| Execucao | 54 | 66 | 2040/2084 | 97,89% |
+| Cobranca | 55 | 119 | 1748/1862 | 93,88% |
 
-Total: 545 testes .NET, sem ignorados na verificacao com observabilidade. Tambem passaram 10
+Total: 560 testes .NET, sem ignorados na verificacao apos o ajuste de observabilidade. Tambem passaram 10
 testes das ferramentas locais, os 3 cenarios BDD e o script HTTP de recuperacao
 financeira com resposta perdida no Docker. Esses numeros sao uma fotografia
 local, nao um resultado de Sonar ou de deploy em nuvem. Reexecute apos editar.
+
+### Quality Gate do codigo novo
+
+A primeira analise da integracao New Relic reprovou Ordens por CA1873 e 75%
+de cobertura no codigo novo, apesar da cobertura total superior a 94%.
+As chamadas de log do IntegracaoWorker agora verificam IsEnabled antes de
+avaliar argumentos. Os testes cobrem logs habilitados/desabilitados, destinos
+da publicacao, persistencia com confirmacao da fila e falha sem confirmacao.
+
+Na medicao local, os IntegracaoWorkers dos tres servicos atingiram 100% das
+linhas e ramificacoes. A regra CA1873 tambem foi verificada com o analisador
+do SDK explicitamente habilitado. Nao foram alterados limites, exclusoes ou
+configuracoes do Quality Gate. O resultado completo do Sonar ainda precisa
+ser confirmado por uma nova analise apos publicar esta correcao.
 
 ## Pendencias externas deliberadas
 
@@ -101,7 +115,8 @@ agora prepara SonarQube Community local e workflow de qualidade apos CI na main.
 Tokens e runners configurados; as primeiras analises autenticadas dos tres
 servicos passaram. Cada commit novo precisa ser analisado novamente. O CD
 independente aguarda CI e Sonar do mesmo SHA; a primeira execucao real passou
-nos tres repositorios. A nova integracao New Relic ainda precisa de PR e checks.
+nos tres repositorios. A correcao do Quality Gate da integracao New Relic ainda
+precisa de PR e nova analise.
 BDD no CI continua pendente.
 Nao foi criada conta Sonar Cloud nem recurso AWS.
 
