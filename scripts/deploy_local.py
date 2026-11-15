@@ -13,6 +13,7 @@ from pathlib import Path
 
 from cd_gate import require_approved_revision
 from deploy_settings import IMAGE_BUILDS, new_private_secrets, service_values
+from new_relic_config import read_new_relic
 from local_runtime import (CLUSTER, common_secrets, ensure_kind, kube, operation_lock,
                            private_json, require_cluster, resources_exist, run, runtime_home, terraform_apply)
 
@@ -43,6 +44,9 @@ def deploy(root, args):
             existing_resources=resources_exist(home, "pvc", "oficina-" + service))
         kube(home, "rollout", "status", "statefulset/elasticmq", "-n", "oficina-plataforma", "--timeout=180s")
         values = service_values(common, private)
+        observability = read_new_relic(home)
+        values["new_relic_enabled"] = observability["enabled"]
+        values["api_secrets"]["NEW_RELIC_LICENSE_KEY"] = observability["license_key"]
         images = []
         for variable, (name, dockerfile) in IMAGE_BUILDS.items():
             values[variable] = name + ":" + tag

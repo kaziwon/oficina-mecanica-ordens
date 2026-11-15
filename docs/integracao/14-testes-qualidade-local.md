@@ -85,11 +85,11 @@ geradas excluidas:
 
 | Servico | Unitarios | Integracao | Linhas cobertas/total | Cobertura |
 | --- | ---: | ---: | ---: | ---: |
-| Ordens | 98 | 157 | 2464/2624 | 93,90% |
-| Execucao | 54 | 61 | 1990/2066 | 96,32% |
-| Cobranca | 55 | 114 | 1699/1844 | 92,14% |
+| Ordens | 98 | 159 | 2503/2638 | 94,88% |
+| Execucao | 54 | 63 | 2029/2081 | 97,50% |
+| Cobranca | 55 | 116 | 1738/1859 | 93,49% |
 
-Total: 539 testes .NET, sem ignorados nesta verificacao. Tambem passaram 10
+Total: 545 testes .NET, sem ignorados na verificacao com observabilidade. Tambem passaram 10
 testes das ferramentas locais, os 3 cenarios BDD e o script HTTP de recuperacao
 financeira com resposta perdida no Docker. Esses numeros sao uma fotografia
 local, nao um resultado de Sonar ou de deploy em nuvem. Reexecute apos editar.
@@ -100,8 +100,9 @@ O bloqueio de 80% foi acrescentado ao CI. O [guia do Sonar](https://github.com/k
 agora prepara SonarQube Community local e workflow de qualidade apos CI na main.
 Tokens e runners configurados; as primeiras analises autenticadas dos tres
 servicos passaram. Cada commit novo precisa ser analisado novamente. O CD
-independente aguarda CI e Sonar do mesmo SHA; precisa de PR e validacao real
-depois desta implementacao. BDD no CI continua pendente.
+independente aguarda CI e Sonar do mesmo SHA; a primeira execucao real passou
+nos tres repositorios. A nova integracao New Relic ainda precisa de PR e checks.
+BDD no CI continua pendente.
 Nao foi criada conta Sonar Cloud nem recurso AWS.
 
 ## Executar BDD no kind

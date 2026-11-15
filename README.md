@@ -297,7 +297,8 @@ Nenhum recurso AWS ou conta Sonar Cloud foi criado.
 O workflow entrega-continua-local.yml aguarda CI e Sonar aprovados para o SHA
 exato da main, reconfirma esses checks, faz build/carregamento da imagem no kind
 e aplica apenas este servico. Manual pela interface Actions tambem exige os
-checks. Ainda precisa de PR/merge e teste real no GitHub para validar o novo CD.
+checks. A primeira execucao real do CD no GitHub passou; cada alteracao nova
+precisa de PR/merge e checks do proprio SHA.
 Qualidade/deploy usam um mutex compartilhado no notebook para evitar saturar
 a memoria, mantendo releases independentes. Os scripts sao testados pelo CI.
 
@@ -322,9 +323,24 @@ No kind, um Job aplica migrations antes do rollout, com ApplyMigrations=true e
 Database__MigrateOnly=true. O processo encerra sem HTTP/workers. A API normal
 usa ApplyMigrations=false. Falha no Job impede atualizar a API.
 
+## Observabilidade no New Relic
+
+A imagem contem o agente .NET fixado e sua instrumentacao XML, sem pacote New
+Relic nas camadas internas. No kind, o deploy le a configuracao privada comum
+de infra-local e habilita APM, logs JSON encaminhados e tracing de HTTP/SQS.
+Sem configuracao, o profiler fica desligado. A entidade deste servico e
+oficina-fase4-ordens; o cluster aparece como oficina-fase4.
+
+SagaId/CorrelationId permitem acompanhar uma OS entre etapas e traces diferentes.
+A outbox nao guarda o contexto HTTP original: nao se trata de um unico trace
+de longa duracao do cadastro ate a entrega. As transacoes de publicacao/consumo
+e seus headers sao instrumentados sem mudar o envelope JSON das mensagens.
+O [guia de observabilidade](https://github.com/kaziwon/oficina-mecanica-infra-local/blob/main/docs/18-observabilidade-new-relic.md)
+explica habilitacao, seguranca, consultas NRQL e verificacao no site.
+
 ## Proximos incrementos
 
-- Publicar por PR e validar o novo CD no GitHub.
-- New Relic distribuido, metrics-server/HPA, BDD no CI e evidencias finais.
+- Publicar por PR e validar esta alteracao de observabilidade no CI.
+- Metrics-server/HPA, BDD no CI e evidencias/documentacao finais.
 
 Esta etapa nao cria recursos na AWS nem depende dos repositorios da Fase 3.
