@@ -1,7 +1,7 @@
 # Oficina Mecanica - Ordens - Fase 4
 
 Microsservico de atendimento e acompanhamento de ordens de servico. Este e o
-primeiro incremento da Fase 4, em repositorio independente da entrega da Fase 3.
+primeiro incremento da Fase 4, em repositorio independente da entrega da Fase 3. 
 
 ## O que esta implementado
 
