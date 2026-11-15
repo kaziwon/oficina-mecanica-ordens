@@ -21,6 +21,8 @@ spec:
             - configMapRef: {name: api-config}
             - secretRef: {name: api-secrets}
           env:
+            - {name: CORECLR_ENABLE_PROFILING, value: '0'}
+            - {name: NEW_RELIC_AGENT_ENABLED, value: 'false'}
             - {name: Database__ApplyMigrations, value: 'true'}
             - {name: Database__MigrateOnly, value: 'true'}
           resources:

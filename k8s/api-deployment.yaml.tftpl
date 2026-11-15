@@ -37,6 +37,15 @@ spec:
           envFrom:
             - configMapRef: {name: api-config}
             - secretRef: {name: api-secrets}
+          env:
+            - {name: NEW_RELIC_METADATA_KUBERNETES_CLUSTER_NAME, value: oficina-fase4}
+            - name: NEW_RELIC_METADATA_KUBERNETES_NAMESPACE_NAME
+              valueFrom: {fieldRef: {fieldPath: metadata.namespace}}
+            - name: NEW_RELIC_METADATA_KUBERNETES_POD_NAME
+              valueFrom: {fieldRef: {fieldPath: metadata.name}}
+            - name: NEW_RELIC_METADATA_KUBERNETES_NODE_NAME
+              valueFrom: {fieldRef: {fieldPath: spec.nodeName}}
+            - {name: NEW_RELIC_METADATA_KUBERNETES_CONTAINER_NAME, value: api}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

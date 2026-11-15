@@ -42,7 +42,13 @@ public sealed class SqsTransport : IDisposable
     }
 
     public async Task Enviar(string fila, string body, CancellationToken token)
-        => await _client.SendMessageAsync(new SendMessageRequest { QueueUrl = await Url(fila, token), MessageBody = body }, token);
+        => await _client.SendMessageAsync(new SendMessageRequest
+        {
+            QueueUrl = await Url(fila, token),
+            MessageBody = body,
+            // No SDK v4 a colecao pode ser nula; o agente insere os headers de trace aqui.
+            MessageAttributes = []
+        }, token);
 
     public async Task<List<Message>> Receber(string fila, CancellationToken token)
     {

@@ -19,6 +19,11 @@ variable "runtime_dir" {
   default = "~/.local/share/oficina-fase4"
 }
 
+variable "new_relic_enabled" {
+  type    = bool
+  default = false
+}
+
 variable "api_image" {
   type = string
   validation {

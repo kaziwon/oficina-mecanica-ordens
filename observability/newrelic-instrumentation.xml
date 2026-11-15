@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension xmlns="urn:newrelic-extension">
+  <instrumentation>
+    <tracerFactory name="NewRelic.Agent.Core.Tracer.Factories.BackgroundThreadTracerFactory" metricName="Saga/PublicarMensagem">
+      <match assemblyName="OficinaMecanica.Ordens.Api" className="OficinaMecanica.Ordens.Messaging.IntegracaoWorker">
+        <exactMethodMatcher methodName="PublicarMensagem" />
+      </match>
+    </tracerFactory>
+    <tracerFactory name="NewRelic.Agent.Core.Tracer.Factories.BackgroundThreadTracerFactory" metricName="Saga/ReceberEProcessar">
+      <match assemblyName="OficinaMecanica.Ordens.Api" className="OficinaMecanica.Ordens.Messaging.IntegracaoWorker">
+        <exactMethodMatcher methodName="ReceberEProcessar" />
+      </match>
+    </tracerFactory>
+  </instrumentation>
+</extension>
